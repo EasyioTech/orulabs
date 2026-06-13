@@ -1,0 +1,106 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-brand-50: oklch(0.97 0.01 250);
+  --color-brand-100: oklch(0.93 0.03 250);
+  --color-brand-200: oklch(0.86 0.07 250);
+  --color-brand-300: oklch(0.76 0.12 250);
+  --color-brand-400: oklch(0.65 0.17 250);
+  --color-brand-500: oklch(0.55 0.22 250);
+  --color-brand-600: oklch(0.46 0.20 250);
+  --color-brand-700: oklch(0.38 0.17 250);
+  --color-brand-800: oklch(0.31 0.13 250);
+  --color-brand-900: oklch(0.25 0.09 250);
+
+  --font-sans: var(--font-sans, "Plus Jakarta Sans"), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: theme(--color-white);
+    color: theme(--color-gray-900);
+    font-family: var(--font-sans);
+  }
+}
+
+@utility hide-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@utility animate-gradient-x {
+  animation: gradient-x 10s ease infinite;
+}
+
+@utility bg-300% {
+  background-size: 300% 300%;
+}
+
+/* ── Onboarding tour (driver.js) — match brand + light theme ── */
+.oru-tour.driver-popover {
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.12);
+  max-width: 320px;
+}
+.oru-tour .driver-popover-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: oklch(0.25 0.09 250);
+}
+.oru-tour .driver-popover-description {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #4b5563;
+}
+.oru-tour .driver-popover-progress-text {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+.oru-tour .driver-popover-footer button {
+  border-radius: 0.625rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-shadow: none;
+}
+.oru-tour .driver-popover-next-btn {
+  background: oklch(0.46 0.20 250);
+  color: #fff;
+  border: none;
+}
+.oru-tour .driver-popover-next-btn:hover {
+  background: oklch(0.38 0.17 250);
+}
+.oru-tour .driver-popover-prev-btn {
+  background: #f3f4f6;
+  color: #4b5563;
+  border: none;
+}

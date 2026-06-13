@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "outDir": "./dist",
+    // API is bundled by `bun build`; it never emits .d.ts. Disabling declaration
+    // avoids TS2742 "inferred type cannot be named" noise from bun's nested deps.
+    "declaration": false,
+    "declarationMap": false,
+    "paths": {
+      "@oruclass/types": ["../../packages/types/src/index.ts"],
+      "@oruclass/validators": ["../../packages/validators/src/index.ts"],
+      "@oruclass/utils": ["../../packages/utils/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

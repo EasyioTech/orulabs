@@ -1,0 +1,1 @@
+ALTER TABLE "training_days" ADD COLUMN "delivery_mode" text DEFAULT 'in_person';
