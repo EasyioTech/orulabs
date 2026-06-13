@@ -44,7 +44,7 @@ services:
       - "127.0.0.1:5011:3001"
     networks:
       - default
-      - traefik
+      - dokploy-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.oruclass-api.entrypoints=websecure"
@@ -79,7 +79,7 @@ services:
       - "127.0.0.1:5010:3000"
     networks:
       - default
-      - traefik
+      - dokploy-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.oruclass-web.entrypoints=websecure"
@@ -92,5 +92,5 @@ volumes:
   redis_data:
 
 networks:
-  traefik:
+  dokploy-network:
     external: true
