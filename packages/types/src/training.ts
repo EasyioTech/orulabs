@@ -220,7 +220,7 @@ export type ResponseData =
   | { type: "attendance"; fields: Record<string, string> }
   | { type: "poll"; selected: string[] }
   | { type: "wordcloud"; words: string[] }
-  | { type: "qna"; question: string }
+  | { type: "qna"; question?: string; questions?: string[] }
   | { type: "pulse"; emoji: string }
   | { type: "mapping"; answers: Record<string, string[]> }
   | { type: "form"; answers: Record<string, string | string[]> }
