@@ -826,5 +826,25 @@ export function registerSocketHandlers(io: IO): void {
       socket.to(`training:${trainingId}`).emit("participant:left", { userId });
       logger.debug({ socketId: socket.id, userId, trainingId }, "socket disconnected");
     });
+
+    // ── CHAT ──────────────────────────────────────────────────────────────────
+    // In-memory only; messages are not persisted to DB. They live only while
+    // the session socket room is active (fine for a live training chat).
+    socket.on("chat:send", async (payload: unknown) => {
+      if (typeof payload !== "object" || payload === null) return;
+      const { trainingId: tid, text } = payload as Record<string, unknown>;
+      if (typeof tid !== "string" || typeof text !== "string") return;
+      if (!text.trim() || text.length > 2000) return;
+
+      const senderName = await getUserName(userId);
+      // Broadcast to everyone in the room INCLUDING the sender so they see their own message
+      io.to(`training:${tid}`).emit("chat:message", {
+        id: `${socket.id}-${Date.now()}`,
+        userId,
+        senderName,
+        text: text.trim(),
+        sentAt: new Date().toISOString(),
+      });
+    });
   });
 }

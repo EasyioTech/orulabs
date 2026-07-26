@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useAuthStore } from "@/store/auth";
@@ -20,7 +20,8 @@ import { SelectDaySlide } from "./SelectDaySlide";
 import { SessionDashboard } from "./SessionDashboard";
 import { TrainerModuleRenderer } from "../tools/TrainerModuleRenderer";
 import { ModuleStopwatch } from "./ModuleStopwatch";
-import { VideoConferenceRoom } from "./VideoConferenceRoom";
+import { DraggableVideoDock } from "./DraggableVideoDock";
+import { LiveChatDock } from "./LiveChatDock";
 import { cn } from "@oruclass/utils";
 import { canDo } from "@/lib/permissions";
 import {
@@ -35,6 +36,7 @@ import {
   RefreshCw,
   CalendarDays,
   Video,
+  MessageSquare,
 } from "lucide-react";
 
 type RightTab = "control" | "agenda" | "participants" | "responses";
@@ -50,6 +52,9 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
   const [rightOpen, setRightOpen] = useState(true);
   const [videoOpen, setVideoOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<RightTab>("control");
+  const boundsRef = useRef<HTMLDivElement>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatUnread, setChatUnread] = useState(0);
 
   const user = useAuthStore((s) => s.user);
   const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId) ?? "";
@@ -235,11 +240,24 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
           {/* Right: status + participant count + toggle */}
           <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={() => setVideoOpen((v) => !v)}
+              onClick={() => { setVideoOpen((v) => !v); }}
               className={cn("p-1.5 rounded-md transition-all duration-200", videoOpen ? "bg-brand-500 text-white shadow-sm shadow-brand-500/20" : "text-gray-500 hover:bg-gray-100")}
               title="Toggle Video Conference"
             >
               <Video size={16} className={cn(videoOpen && "animate-pulse")} />
+            </button>
+
+            <button
+              onClick={() => { setChatOpen((v) => !v); setChatUnread(0); }}
+              className={cn("relative p-1.5 rounded-md transition-all duration-200", chatOpen ? "bg-brand-500 text-white shadow-sm shadow-brand-500/20" : "text-gray-500 hover:bg-gray-100")}
+              title="Toggle Chat"
+            >
+              <MessageSquare size={16} />
+              {chatUnread > 0 && !chatOpen && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
+                  {chatUnread > 9 ? "9+" : chatUnread}
+                </span>
+              )}
             </button>
 
             {participantCount > 0 && (
@@ -295,7 +313,7 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
         )}
 
         {/* Module canvas */}
-        <div className="flex-1 flex overflow-hidden bg-white relative">
+        <div className="flex-1 flex overflow-hidden bg-white relative" ref={boundsRef}>
           <div className="flex-1 relative overflow-hidden w-full">
             <ModuleStopwatch canControl={canDo(role as TrainingRole | undefined, "pause_room")} />
             <div className="h-full overflow-hidden">
@@ -305,9 +323,19 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
           
           {/* Floating Video Conference Dock */}
           {videoOpen && (
-            <div className="fixed sm:absolute z-50 overflow-hidden shadow-2xl border border-white/10 inset-x-0 bottom-0 h-[40vh] rounded-t-2xl sm:rounded-2xl sm:bottom-6 sm:right-6 sm:left-auto sm:w-96 sm:h-[500px] bg-black animate-in slide-in-from-bottom-8 fade-in duration-300">
-              <VideoConferenceRoom trainingId={trainingId} />
-            </div>
+            <DraggableVideoDock
+              trainingId={trainingId}
+              boundsRef={boundsRef}
+              onClose={() => setVideoOpen(false)}
+            />
+          )}
+          {chatOpen && (
+            <LiveChatDock
+              trainingId={trainingId}
+              boundsRef={boundsRef}
+              onClose={() => setChatOpen(false)}
+              onUnreadChange={(updater) => setChatUnread(updater)}
+            />
           )}
         </div>
       </div>

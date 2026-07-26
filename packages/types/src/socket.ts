@@ -17,6 +17,7 @@ export interface ClientToServerEvents {
   "stopwatch:action": (data: { trainingId: string; moduleId: string; action: "pause" | "resume" | "reset" }) => void;
   "module:setTimeLimit": (data: { trainingId: string; moduleId: string; timeLimitSeconds: number }) => void;
   heartbeat: () => void;
+  "chat:send": (data: { trainingId: string; text: string }) => void;
 }
 
 // Server → Client events
@@ -38,6 +39,7 @@ export interface ServerToClientEvents {
   "session:started": () => void;
   "session:ended": () => void;
   "session:reset": () => void;
+  "chat:message": (data: { id: string; userId: string; senderName: string; text: string; sentAt: string }) => void;
   error: (data: { code: string; message: string }) => void;
 }
 

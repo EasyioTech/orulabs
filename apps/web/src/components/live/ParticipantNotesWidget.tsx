@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { useParticipantScratchpad, useUpdateParticipantScratchpad } from "@/hooks/useParticipantScratchpad";
-import { X, Save, CheckCircle2 } from "lucide-react";
-import { cn } from "@oruclass/utils";
+import { X, Save, CheckCircle2, Move } from "lucide-react";
 
 export function ParticipantNotesWidget({ trainingId, onClose }: { trainingId: string; onClose: () => void }) {
   const { data: scratchpad, isLoading } = useParticipantScratchpad(trainingId);
   const updateScratchpad = useUpdateParticipantScratchpad(trainingId);
-  
+
   const [content, setContent] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -24,9 +24,7 @@ export function ParticipantNotesWidget({ trainingId, onClose }: { trainingId: st
     setContent(newContent);
     setSaveStatus("saving");
 
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
     saveTimeoutRef.current = setTimeout(() => {
       updateScratchpad.mutate(
@@ -42,19 +40,49 @@ export function ParticipantNotesWidget({ trainingId, onClose }: { trainingId: st
   };
 
   return (
-    <div className="flex flex-col h-[500px] w-[380px] bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-8 fade-in duration-200">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-gray-800 text-sm">Personal Notes</h3>
-          {saveStatus === "saving" && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Save size={10} className="animate-pulse" /> Saving...</span>}
-          {saveStatus === "saved" && <span className="text-[10px] text-green-500 flex items-center gap-1"><CheckCircle2 size={10} /> Saved</span>}
+    <motion.div
+      drag
+      dragMomentum={false}
+      dragElastic={0.1}
+      className="fixed z-50 flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden cursor-move"
+      style={{
+        width: 360,
+        height: 480,
+        bottom: 90,
+        right: 24,
+        touchAction: "none",
+      }}
+      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: 20 }}
+    >
+      {/* Header — drag handle */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-amber-50 flex-shrink-0">
+        <div className="flex items-center gap-2 text-amber-700">
+          <Move size={13} className="opacity-60" />
+          <h3 className="font-semibold text-sm">Personal Notes</h3>
+          {saveStatus === "saving" && (
+            <span className="text-[10px] text-gray-400 flex items-center gap-1 ml-1">
+              <Save size={10} className="animate-pulse" /> Saving...
+            </span>
+          )}
+          {saveStatus === "saved" && (
+            <span className="text-[10px] text-green-500 flex items-center gap-1 ml-1">
+              <CheckCircle2 size={10} /> Saved
+            </span>
+          )}
         </div>
-        <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-lg transition-colors text-gray-500">
-          <X size={16} />
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={onClose}
+          className="p-1 hover:bg-amber-100 rounded-lg transition-colors text-amber-600"
+        >
+          <X size={15} />
         </button>
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto">
+      {/* Notes body */}
+      <div className="flex-1 overflow-hidden">
         {isLoading ? (
           <div className="h-full flex items-center justify-center">
             <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
@@ -63,12 +91,13 @@ export function ParticipantNotesWidget({ trainingId, onClose }: { trainingId: st
           <textarea
             value={content}
             onChange={handleChange}
-            placeholder="Start typing your notes here... (They save automatically)"
-            className="w-full h-full min-h-[400px] resize-none outline-none text-gray-800 text-sm leading-relaxed placeholder:text-gray-300"
+            onPointerDown={(e) => e.stopPropagation()}
+            placeholder="Start typing your notes here… (They save automatically)"
+            className="w-full h-full resize-none outline-none text-gray-800 text-sm leading-relaxed placeholder:text-gray-300 p-4 cursor-text"
             style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}
           />
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

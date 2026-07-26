@@ -5,7 +5,7 @@ import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
 import { useLiveSessionStore } from "@/store/liveSession";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TrainingModule } from "@oruclass/types";
-import { playJoinSound, playLeaveSound, playSuccessSound } from "@/lib/sounds";
+import { playJoinSound, playLeaveSound, playSessionStartSound, playSessionPauseSound, playSessionResumeSound, playSessionEndSound } from "@/lib/sounds";
 
 export function useSocketSession(trainingId: string | null) {
   const initialized = useRef(false);
@@ -73,7 +73,7 @@ export function useSocketSession(trainingId: string | null) {
       setActiveModule(module || (moduleId ? ({ id: moduleId } as TrainingModule) : null));
       invalidateAll();
       qc.invalidateQueries({ queryKey: ["modules"] });
-      playSuccessSound();
+      // No sound on module change — only session lifecycle events trigger audio
     });
 
     socket.on("participant:joined", (p) => {
@@ -121,18 +121,22 @@ export function useSocketSession(trainingId: string | null) {
     socket.on("session:paused", () => {
       setPaused(true);
       invalidateAll();
+      playSessionPauseSound();
     });
     socket.on("session:resumed", () => {
       setPaused(false);
       invalidateAll();
+      playSessionResumeSound();
     });
     socket.on("session:started", () => {
       setPaused(false);
       invalidateAll();
+      playSessionStartSound();
     });
     socket.on("session:ended", () => {
       reset();
       invalidateAll();
+      playSessionEndSound();
     });
     socket.on("session:reset", () => {
       reset();

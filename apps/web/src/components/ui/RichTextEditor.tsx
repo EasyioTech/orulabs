@@ -158,19 +158,17 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
   );
 };
 
-const extensions = [
-  StarterKit,
-  Underline,
-  TextStyle,
-  Color,
-  Link.configure({
-    openOnClick: false,
-  }),
-];
-
 export function RichTextEditor({ value, onChange, placeholder = "Type here...", className, minHeight = "150px" }: RichTextEditorProps) {
   const editor = useEditor({
-    extensions,
+    extensions: [
+      StarterKit,
+      Underline,
+      TextStyle,
+      Color,
+      Link.configure({
+        openOnClick: false,
+      }),
+    ],
     content: value,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
