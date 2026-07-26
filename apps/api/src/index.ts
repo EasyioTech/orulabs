@@ -99,6 +99,10 @@ app.onError(errorHandler);
 // ─── HTTP Server + Socket.IO ──────────────────────────────────────────────────
 const httpServer = createServer(async (req, res) => {
   try {
+    if (req.url?.startsWith("/socket.io/")) {
+      return; // Handled by Socket.IO
+    }
+
     let tooLarge = false;
     const bodyBuffer = await new Promise<Buffer | undefined>((resolve, reject) => {
       if (req.method === "GET" || req.method === "HEAD") {

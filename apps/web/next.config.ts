@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https:",
-      "font-src 'self' data: https://fonts.gstatic.com",
+      "font-src 'self' data: https://fonts.gstatic.com https://cdn.tldraw.com",
       `connect-src 'self' ${apiOrigin} ${wsOrigin} ${sentryOrigin} ${liveKitUrl} ${liveKitHttpUrl} https://cdn.tldraw.com https://unpkg.com wss://*.livekit.cloud https://*.livekit.cloud`.trim(),
       "frame-ancestors 'none'",
       "object-src 'none'",
