@@ -1,6 +1,6 @@
 export type TrainingStatus = "draft" | "connecting" | "live" | "paused" | "completed";
 export type TrainingCategory = "atl" | "maker_space" | "ict_cal";
-export type ModuleType = "quiz" | "whiteboard" | "reflection" | "matrix" | "custom" | "attendance" | "poll" | "wordcloud" | "qna" | "timer" | "pulse" | "mapping" | "form" | "embed";
+export type ModuleType = "quiz" | "whiteboard" | "reflection" | "matrix" | "custom" | "attendance" | "poll" | "wordcloud" | "qna" | "timer" | "pulse" | "mapping" | "form" | "embed" | "code" | "document";
 export type TrainingRole =
   | "lead_trainer"
   | "full_editor"
@@ -125,6 +125,12 @@ export interface ModuleConfig {
   embedUrl?: string;
   embedTitle?: string;
   embedDescription?: string;
+  // Code Editor
+  codeLanguage?: string;
+  codePrompt?: string;
+  initialCode?: string;
+  // Document
+  initialContent?: string;
 }
 
 export interface QuizQuestion {
@@ -207,7 +213,7 @@ export interface SubmissionEntry {
 
 export type ResponseData =
   | { type: "quiz"; answers: Record<string, string> }
-  | { type: "whiteboard"; strokes: StrokeData[] }
+  | { type: "whiteboard"; snapshot: any }
   | { type: "reflection"; text: string; comments?: ReflectionComment[] }
   | { type: "matrix"; cells: Record<string, string> }
   | { type: "sticky"; notes: StickyNote[] }
@@ -218,7 +224,9 @@ export type ResponseData =
   | { type: "pulse"; emoji: string }
   | { type: "mapping"; answers: Record<string, string[]> }
   | { type: "form"; answers: Record<string, string | string[]> }
-  | { type: "embed"; viewed: boolean };
+  | { type: "embed"; viewed: boolean }
+  | { type: "code"; code: string }
+  | { type: "document"; viewed: boolean };
 
 /**
  * Narrow a stored ResponseData to a specific module type. Returns undefined when

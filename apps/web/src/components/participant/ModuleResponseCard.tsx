@@ -215,7 +215,7 @@ function ResponseContent({ module, response }: { module: TrainingModule; respons
     case "whiteboard":
       return (
         <p className="text-sm text-gray-500 italic">
-          Whiteboard submission ({data.strokes.length} stroke{data.strokes.length !== 1 ? "s" : ""})
+          Whiteboard submission (Snapshot saved)
         </p>
       );
 

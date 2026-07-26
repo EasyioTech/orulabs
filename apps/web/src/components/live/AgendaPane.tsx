@@ -3,7 +3,7 @@
 import { useModules } from "@/hooks/useModules";
 import { useLiveSessionStore } from "@/store/liveSession";
 import { cn } from "@oruclass/utils";
-import { Lock, Unlock, PlayCircle } from "lucide-react";
+import { Lock, Unlock, PlayCircle, ListOrdered } from "lucide-react";
 
 interface Props {
   trainingId: string;
@@ -33,8 +33,12 @@ export function AgendaPane({ trainingId, workspaceId }: Props) {
       </div>
 
       {!modules?.length ? (
-        <div className="py-8 text-center bg-gray-50 rounded-xl border border-gray-100">
-          <p className="text-xs text-gray-500">No modules in agenda</p>
+        <div className="flex flex-col items-center justify-center py-10 bg-gray-50 rounded-xl border border-gray-100">
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mb-2 shadow-sm border border-gray-100">
+            <ListOrdered size={18} className="text-gray-300" />
+          </div>
+          <p className="text-sm font-semibold text-gray-800">No modules in agenda</p>
+          <p className="text-xs text-gray-500 mt-0.5">Add modules from the Studio to build your agenda.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">

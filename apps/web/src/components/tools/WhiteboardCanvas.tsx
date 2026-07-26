@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSocket } from "@/hooks/useSocket";
 import { useAuthStore } from "@/store/auth";
-import type { TrainingModule, StrokeData } from "@oruclass/types";
+import type { TrainingModule } from "@oruclass/types";
 import { AdvancedWhiteboard } from "./AdvancedWhiteboard";
 
 interface Props {
@@ -14,35 +14,21 @@ interface Props {
 export function WhiteboardCanvas({ module, trainingId }: Props) {
   const socket = useSocket();
   const user = useAuthStore((s) => s.user);
-  const [strokes, setStrokes] = useState<StrokeData[]>([]);
+  const [snapshot, setSnapshot] = useState<any>(null);
 
-  // Listen for incoming strokes
   useEffect(() => {
-    const handleDraw = ({ stroke }: { stroke: StrokeData }) => {
-      setStrokes((prev) => [...prev, stroke]);
-    };
-    
-    const handleClear = () => {
-      setStrokes([]);
+    const handleSync = ({ snapshot: newSnapshot }: { snapshot?: any }) => {
+      if (newSnapshot) setSnapshot(newSnapshot);
     };
 
-    socket.on("draw:update", handleDraw);
-    socket.on("draw:clear", handleClear);
-
+    socket.on("draw:sync", handleSync);
     return () => {
-      socket.off("draw:update", handleDraw);
-      socket.off("draw:clear", handleClear);
+      socket.off("draw:sync", handleSync);
     };
   }, [socket]);
 
-  const handleStrokeEnd = useCallback((stroke: StrokeData) => {
-    setStrokes((prev) => [...prev, stroke]);
-    socket.emit("draw:update", { moduleId: module.id, trainingId, stroke });
-  }, [socket, module.id, trainingId]);
-
-  const handleClear = useCallback(() => {
-    setStrokes([]);
-    socket.emit("draw:clear", { moduleId: module.id, trainingId });
+  const handleChange = useCallback((newSnapshot: any) => {
+    socket.emit("draw:sync", { moduleId: module.id, trainingId, snapshot: newSnapshot });
   }, [socket, module.id, trainingId]);
 
   // Guests are QR-join participants; any credentialed (email) user is a trainer.
@@ -55,13 +41,11 @@ export function WhiteboardCanvas({ module, trainingId }: Props) {
       </div>
       <div className="flex-1 relative overflow-hidden">
         <AdvancedWhiteboard
-          strokes={strokes}
-          onStrokeEnd={handleStrokeEnd}
-          onClear={handleClear}
+          snapshot={snapshot}
+          onChange={handleChange}
           readonly={!isTrainer}
         />
       </div>
     </div>
   );
 }
-

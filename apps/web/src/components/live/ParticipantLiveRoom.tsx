@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/auth";
 import { useLiveSessionStore } from "@/store/liveSession";
 import { useSocketSession } from "@/hooks/useSocket";
@@ -13,8 +13,9 @@ import { ParticipantModuleRenderer } from "../tools/ParticipantModuleRenderer";
 import { ParticipantScratchpad } from "./ParticipantScratchpad";
 import { ModuleStopwatch } from "./ModuleStopwatch";
 import { GuestUpgradeBanner } from "./GuestUpgradeBanner";
+import { VideoConferenceRoom } from "./VideoConferenceRoom";
 import { cn } from "@oruclass/utils";
-import { WifiOff, RefreshCw } from "lucide-react";
+import { WifiOff, RefreshCw, Video } from "lucide-react";
 
 function clearQueue(trainingId: string) {
   try {
@@ -23,6 +24,7 @@ function clearQueue(trainingId: string) {
 }
 
 export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
+  const [videoOpen, setVideoOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const { data: training } = useParticipantTraining(trainingId);
   const socket = useSocketSession(trainingId);
@@ -148,14 +150,23 @@ export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
           } as Record<string, { label: string; dot: string; pill: string }>)[training.sessionStatus]
             ?? { label: training.sessionStatus, dot: "bg-gray-400", pill: "bg-gray-50 text-gray-500 border-gray-100" };
           return (
-            <div className={cn("flex items-center gap-1.5 border rounded-full px-2.5 py-1", cfg.pill)}>
-              <span className="relative flex h-1.5 w-1.5 shrink-0">
-                {(training.sessionStatus === "live" || training.sessionStatus === "connecting") && (
-                  <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", cfg.dot)} />
-                )}
-                <span className={cn("relative inline-flex rounded-full h-1.5 w-1.5", cfg.dot)} />
-              </span>
-              <span className="text-[11px] font-semibold">{cfg.label}</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setVideoOpen((v) => !v)}
+                className={cn("p-1.5 rounded-md transition-colors", videoOpen ? "bg-brand-100 text-brand-700" : "text-gray-500 hover:bg-gray-100")}
+                title="Toggle Video Conference"
+              >
+                <Video size={16} />
+              </button>
+              <div className={cn("flex items-center gap-1.5 border rounded-full px-2.5 py-1", cfg.pill)}>
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  {(training.sessionStatus === "live" || training.sessionStatus === "connecting") && (
+                    <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", cfg.dot)} />
+                  )}
+                  <span className={cn("relative inline-flex rounded-full h-1.5 w-1.5", cfg.dot)} />
+                </span>
+                <span className="text-[11px] font-semibold">{cfg.label}</span>
+              </div>
             </div>
           );
         })()}
@@ -181,9 +192,16 @@ export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
       )}
 
       {/* Content Area */}
-      <div className="flex-1 relative overflow-y-auto">
-        <ModuleStopwatch />
-        {renderContent()}
+      <div className="flex-1 flex overflow-hidden">
+        {videoOpen && (
+          <div className="w-72 lg:w-96 border-r border-gray-100 bg-black flex-shrink-0">
+            <VideoConferenceRoom trainingId={trainingId} />
+          </div>
+        )}
+        <div className="flex-1 relative overflow-y-auto">
+          <ModuleStopwatch />
+          {renderContent()}
+        </div>
       </div>
 
       {/* FAB Scratchpad */}

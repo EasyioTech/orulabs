@@ -8,9 +8,9 @@ export interface ClientToServerEvents {
     data: { trainingId: string; moduleId: string; responseData: unknown },
     ack?: (result: { ok: boolean; error?: string }) => void
   ) => void;
-  "draw:update": (data: { trainingId: string; moduleId: string; stroke: StrokeData }) => void;
+  "draw:update": (data: { trainingId: string; moduleId: string; stroke?: StrokeData; snapshot?: any }) => void;
   "draw:clear": (data: { trainingId: string; moduleId: string }) => void;
-  "draw:sync": (data: { trainingId: string; moduleId: string; strokes: StrokeData[] }) => void;
+  "draw:sync": (data: { trainingId: string; moduleId: string; strokes?: StrokeData[]; snapshot?: any }) => void;
   "note:create": (data: { trainingId: string; moduleId: string; note: StickyNote }) => void;
   "note:position": (data: { trainingId: string; moduleId: string; noteId: string; x: number; y: number }) => void;
   "timer:sync": (data: { trainingId: string; moduleId: string; remaining: number; running: boolean; duration: number }) => void;
@@ -26,9 +26,9 @@ export interface ServerToClientEvents {
   "participant:left": (data: { userId: string }) => void;
   "data:aggregate": (data: { trainingId: string; moduleId: string; responseCount: number }) => void;
   "session:submission_update": (data: { trainingId: string; moduleId: string; liveSessionId: string; submitted: number; totalParticipants: number }) => void;
-  "draw:update": (data: { moduleId: string; userId: string; stroke: StrokeData }) => void;
+  "draw:update": (data: { moduleId: string; userId: string; stroke?: StrokeData; snapshot?: any }) => void;
   "draw:clear": (data: { moduleId: string; userId: string }) => void;
-  "draw:sync": (data: { moduleId: string; userId: string; strokes: StrokeData[] }) => void;
+  "draw:sync": (data: { moduleId: string; userId: string; strokes?: StrokeData[]; snapshot?: any }) => void;
   "note:create": (data: { moduleId: string; note: StickyNote }) => void;
   "note:position": (data: { moduleId: string; noteId: string; x: number; y: number }) => void;
   "timer:sync": (data: { moduleId: string; remaining: number; running: boolean; duration: number }) => void;

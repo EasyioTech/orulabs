@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSocket } from "@/hooks/useSocket";
-import type { TrainingModule, StrokeData } from "@oruclass/types";
+import type { TrainingModule } from "@oruclass/types";
 import { AdvancedWhiteboard } from "./AdvancedWhiteboard";
 
 interface Props {
@@ -12,30 +12,17 @@ interface Props {
 
 export function ParticipantWhiteboard({ module, trainingId }: Props) {
   const socket = useSocket();
-  const [strokes, setStrokes] = useState<StrokeData[]>([]);
+  const [snapshot, setSnapshot] = useState<any>(null);
 
   useEffect(() => {
     if (!socket) return;
     
-    const handleUpdate = ({ stroke }: { stroke: StrokeData }) => {
-      setStrokes((prev) => [...prev, stroke]);
+    const handleSync = ({ snapshot: newSnapshot }: { snapshot?: any }) => {
+      if (newSnapshot) setSnapshot(newSnapshot);
     };
 
-    const handleClear = () => {
-      setStrokes([]);
-    };
-
-    const handleSync = ({ strokes }: { strokes: StrokeData[] }) => {
-      setStrokes(strokes);
-    };
-
-    socket.on("draw:update", handleUpdate);
-    socket.on("draw:clear", handleClear);
     socket.on("draw:sync", handleSync);
-
     return () => {
-      socket.off("draw:update", handleUpdate);
-      socket.off("draw:clear", handleClear);
       socket.off("draw:sync", handleSync);
     };
   }, [socket]);
@@ -51,9 +38,7 @@ export function ParticipantWhiteboard({ module, trainingId }: Props) {
       
       <div className="flex-1 relative bg-[#f3f3f3]">
         <AdvancedWhiteboard
-          strokes={strokes}
-          onStrokeEnd={() => {}} // readonly, won't be called
-          onClear={() => {}}
+          snapshot={snapshot}
           readonly={true}
           className="w-full h-full"
         />

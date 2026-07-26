@@ -2,33 +2,31 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParticipantScratchpad, useUpdateParticipantScratchpad } from "@/hooks/useParticipantScratchpad";
-import { X, Save, CheckCircle2, Eraser } from "lucide-react";
-import type { StrokeData } from "@oruclass/types";
-
+import { X, Save, CheckCircle2 } from "lucide-react";
 import { AdvancedWhiteboard } from "../tools/AdvancedWhiteboard";
 
 export function ParticipantWhiteboardWidget({ trainingId, onClose }: { trainingId: string; onClose: () => void }) {
   const { data: scratchpad, isLoading } = useParticipantScratchpad(trainingId);
   const updateScratchpad = useUpdateParticipantScratchpad(trainingId);
   
-  const [strokes, setStrokes] = useState<StrokeData[]>([]);
+  const [snapshot, setSnapshot] = useState<any>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize from scratchpad
   useEffect(() => {
-    if (scratchpad?.personalWhiteboard && Array.isArray(scratchpad.personalWhiteboard.strokes)) {
-      setStrokes(scratchpad.personalWhiteboard.strokes as StrokeData[]);
+    if (scratchpad?.personalWhiteboard && scratchpad.personalWhiteboard.snapshot) {
+      setSnapshot(scratchpad.personalWhiteboard.snapshot);
     }
   }, [scratchpad?.personalWhiteboard]);
 
-  const saveStrokes = (newStrokes: StrokeData[]) => {
+  const saveSnapshot = (newSnapshot: any) => {
     setSaveStatus("saving");
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
     saveTimeoutRef.current = setTimeout(() => {
       updateScratchpad.mutate(
-        { personalWhiteboard: { strokes: newStrokes } },
+        { personalWhiteboard: { snapshot: newSnapshot } },
         {
           onSuccess: () => {
             setSaveStatus("saved");
@@ -39,22 +37,9 @@ export function ParticipantWhiteboardWidget({ trainingId, onClose }: { trainingI
     }, 1000);
   };
 
-  const handleStrokeEnd = (stroke: StrokeData) => {
-    setStrokes(prev => {
-      const updated = [...prev, stroke];
-      saveStrokes(updated);
-      return updated;
-    });
-  };
-
-  const handleStrokesChange = (newStrokes: StrokeData[]) => {
-    setStrokes(newStrokes);
-    saveStrokes(newStrokes);
-  };
-
-  const handleClear = () => {
-    setStrokes([]);
-    saveStrokes([]);
+  const handleChange = (newSnapshot: any) => {
+    setSnapshot(newSnapshot);
+    saveSnapshot(newSnapshot);
   };
 
   return (
@@ -79,10 +64,8 @@ export function ParticipantWhiteboardWidget({ trainingId, onClose }: { trainingI
           </div>
         ) : (
           <AdvancedWhiteboard
-            strokes={strokes}
-            onStrokeEnd={handleStrokeEnd}
-            onStrokesChange={handleStrokesChange}
-            onClear={handleClear}
+            snapshot={snapshot}
+            onChange={handleChange}
           />
         )}
       </div>

@@ -6,7 +6,7 @@ import { useLiveSessionStore } from "@/store/liveSession";
 import { useCurrentSession, useSessionParticipants, useParticipantResponse, useUpdateTargetResponses } from "@/hooks/useSessions";
 import type { Training } from "@oruclass/types";
 import { cn } from "@oruclass/utils";
-import { Users, CheckCircle2, Clock, Target, ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
+import { Users, CheckCircle2, Clock, Target, ChevronLeft, ChevronRight, X, Loader2, Lock } from "lucide-react";
 
 interface Props {
   training: Training;
@@ -105,8 +105,14 @@ export function SessionDashboard({ training }: Props) {
 
   if (!session) {
     return (
-      <div className="p-4 text-center">
-        <p className="text-xs text-gray-400 pt-6">No active session</p>
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+          <Clock size={20} className="text-gray-300" />
+        </div>
+        <h3 className="text-sm font-semibold text-gray-800 mb-1">No Active Session</h3>
+        <p className="text-xs text-gray-500 max-w-[200px]">
+          Start the session from the Controls tab to track live responses here.
+        </p>
       </div>
     );
   }
@@ -181,7 +187,13 @@ export function SessionDashboard({ training }: Props) {
       {/* Participant list */}
       <div className="flex-1 overflow-y-auto">
         {!activeModule ? (
-          <p className="text-xs text-gray-400 text-center p-4 pt-6">Unlock a module to see submissions</p>
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mb-2 shadow-sm border border-gray-100">
+              <Lock size={18} className="text-gray-300" />
+            </div>
+            <p className="text-sm font-semibold text-gray-800">Waiting for Module</p>
+            <p className="text-xs text-gray-500 mt-0.5">Unlock a module to see submissions.</p>
+          </div>
         ) : loadingParticipants ? (
           <div className="flex justify-center py-6">
             <Loader2 size={16} className="animate-spin text-gray-300" />

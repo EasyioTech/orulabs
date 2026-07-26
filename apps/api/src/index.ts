@@ -4,6 +4,8 @@ import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
+import { Hocuspocus } from "@hocuspocus/server";
+import { WebSocketServer } from "ws";
 import type { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from "@oruclass/types";
 import { authRouter } from "./routes/auth";
 import { workspacesRouter } from "./routes/workspaces";
@@ -16,6 +18,7 @@ import { analyticsRouter } from "./routes/analytics";
 import { invitationsRouter } from "./routes/invitations";
 import { sessionsRouter } from "./routes/sessions";
 import { facilitatorInvitationsRouter } from "./routes/facilitatorInvitations";
+import { videoRouter } from "./routes/video";
 import { errorHandler } from "./middleware/errorHandler";
 import { authRateLimiter, guestRateLimiter, apiRateLimiter } from "./middleware/rateLimiter";
 import { registerSocketHandlers } from "./socket/handlers";
@@ -85,6 +88,7 @@ trainingsRouter.route("/", responsesRouter);
 trainingsRouter.route("/", analyticsRouter);
 trainingsRouter.route("/", sessionsRouter);
 app.route("/api/workspaces/:workspaceId/trainings", trainingsRouter);
+app.route("/api/video", videoRouter);
 
 app.route("/api/invitations", facilitatorInvitationsRouter);
 app.route("/api", participantsRouter);
@@ -213,6 +217,25 @@ httpServer.listen(PORT, "0.0.0.0", () => {
   logger.info(`Socket.IO listening on ws://0.0.0.0:${PORT}`);
   if (process.env.NODE_ENV !== "production" && process.env.SKIP_EMAIL_VERIFICATION === "true") {
     logger.warn("⚠ EMAIL VERIFICATION SKIPPED (dev) — signups are auto-verified");
+  }
+});
+
+// ─── Hocuspocus (Yjs Collaboration) ───────────────────────────────────────────
+const hocuspocus = new Hocuspocus({
+  // Database extension or auth could be added here
+});
+
+const wss = new WebSocketServer({ noServer: true });
+
+wss.on("connection", (ws, request) => {
+  hocuspocus.handleConnection(ws, request as any);
+});
+
+httpServer.on("upgrade", (request, socket, head) => {
+  if (request.url?.startsWith("/collaboration")) {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
   }
 });
 

@@ -2,6 +2,7 @@
 
 import { useLiveSessionStore } from "@/store/liveSession";
 import { cn } from "@oruclass/utils";
+import { Users } from "lucide-react";
 
 export function ParticipantGrid() {
   const participants = useLiveSessionStore((s) => s.participants);
@@ -19,8 +20,12 @@ export function ParticipantGrid() {
       </div>
 
       {list.length === 0 ? (
-        <div className="py-8 text-center bg-gray-50 rounded-xl border border-gray-100">
-          <p className="text-xs text-gray-500">No participants yet</p>
+        <div className="flex flex-col items-center justify-center py-10 bg-gray-50 rounded-xl border border-gray-100">
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mb-2 shadow-sm border border-gray-100">
+            <Users size={18} className="text-gray-300" />
+          </div>
+          <p className="text-sm font-semibold text-gray-800">No participants yet</p>
+          <p className="text-xs text-gray-500 mt-0.5">They will appear here when they join.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-1">

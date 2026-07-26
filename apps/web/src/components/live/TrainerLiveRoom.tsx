@@ -20,6 +20,7 @@ import { SelectDaySlide } from "./SelectDaySlide";
 import { SessionDashboard } from "./SessionDashboard";
 import { TrainerModuleRenderer } from "../tools/TrainerModuleRenderer";
 import { ModuleStopwatch } from "./ModuleStopwatch";
+import { VideoConferenceRoom } from "./VideoConferenceRoom";
 import { cn } from "@oruclass/utils";
 import { canDo } from "@/lib/permissions";
 import {
@@ -33,6 +34,7 @@ import {
   WifiOff,
   RefreshCw,
   CalendarDays,
+  Video,
 } from "lucide-react";
 
 type RightTab = "control" | "agenda" | "participants" | "responses";
@@ -46,6 +48,7 @@ const TABS: { id: RightTab; label: string; Icon: React.ElementType }[] = [
 
 export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
   const [rightOpen, setRightOpen] = useState(true);
+  const [videoOpen, setVideoOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<RightTab>("control");
 
   const user = useAuthStore((s) => s.user);
@@ -231,6 +234,14 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
 
           {/* Right: status + participant count + toggle */}
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setVideoOpen((v) => !v)}
+              className={cn("p-1.5 rounded-md transition-colors", videoOpen ? "bg-brand-100 text-brand-700" : "text-gray-500 hover:bg-gray-100")}
+              title="Toggle Video Conference"
+            >
+              <Video size={16} />
+            </button>
+
             {participantCount > 0 && (
               <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-500 font-medium bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1">
                 <Users size={12} />
@@ -284,10 +295,17 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
         )}
 
         {/* Module canvas */}
-        <div className="flex-1 overflow-auto bg-white relative">
-          <ModuleStopwatch canControl={canDo(role as TrainingRole | undefined, "pause_room")} />
-          <div className="h-full overflow-hidden">
-            {renderModuleArea()}
+        <div className="flex-1 flex overflow-hidden bg-white relative">
+          {videoOpen && (
+            <div className="w-72 lg:w-96 border-r border-gray-100 bg-black flex-shrink-0">
+              <VideoConferenceRoom trainingId={trainingId} />
+            </div>
+          )}
+          <div className="flex-1 relative overflow-hidden">
+            <ModuleStopwatch canControl={canDo(role as TrainingRole | undefined, "pause_room")} />
+            <div className="h-full overflow-hidden">
+              {renderModuleArea()}
+            </div>
           </div>
         </div>
       </div>
