@@ -5,6 +5,7 @@ import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
 import { useLiveSessionStore } from "@/store/liveSession";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TrainingModule } from "@oruclass/types";
+import { playJoinSound, playLeaveSound, playSuccessSound } from "@/lib/sounds";
 
 export function useSocketSession(trainingId: string | null) {
   const initialized = useRef(false);
@@ -72,19 +73,27 @@ export function useSocketSession(trainingId: string | null) {
       setActiveModule(module || (moduleId ? ({ id: moduleId } as TrainingModule) : null));
       invalidateAll();
       qc.invalidateQueries({ queryKey: ["modules"] });
+      playSuccessSound();
     });
 
     socket.on("participant:joined", (p) => {
+      const isNew = !useLiveSessionStore.getState().participants.has(p.userId);
       addParticipant({
         userId: p.userId,
         name: p.name,
         role: p.role as "trainer" | "participant",
         joinedAt: p.joinedAt,
-        connectionStatus: "online",
+        connectionStatus: p.connectionStatus || "online",
       });
+      if (isNew && p.connectionStatus !== "offline") {
+        playJoinSound();
+      }
     });
 
     socket.on("participant:left", ({ userId }) => {
+      if (useLiveSessionStore.getState().participants.has(userId)) {
+        playLeaveSound();
+      }
       removeParticipant(userId);
     });
 

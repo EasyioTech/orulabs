@@ -27,16 +27,18 @@ export function TrainerQnA({ module, trainingId }: Props) {
             <p className="text-sm">Participants can submit questions anonymously.</p>
           </div>
         ) : (
-          responses?.map((r) => {
-            const question = responseDataOf(r.responseData, "qna")?.question ?? "";
+          responses?.flatMap((r) => {
+            const data = responseDataOf(r.responseData, "qna");
+            const questions: string[] = data?.questions || (data?.question ? [data.question] : []);
             const when = r.createdAt ?? r.submittedAt;
-            return (
-              <div key={r.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-start gap-3">
+            
+            return questions.map((q, idx) => (
+              <div key={`${r.id}-${idx}`} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-bold shrink-0">
                   ?
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-800 text-sm">{question || "No content"}</p>
+                  <p className="text-gray-800 text-sm">{q || "No content"}</p>
                   <div className="flex items-center gap-3 mt-2">
                     <span className="text-xs text-gray-400">{new Date(when).toLocaleTimeString()}</span>
                     <span className="text-xs text-gray-300">•</span>
@@ -44,7 +46,7 @@ export function TrainerQnA({ module, trainingId }: Props) {
                   </div>
                 </div>
               </div>
-            );
+            ));
           })
         )}
       </div>

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useResponseSubmit } from "@/hooks/useResponseSubmit";
+import { useModuleResponses } from "@/hooks/useModuleResponses";
 import { useIsTimeUp } from "@/hooks/useIsTimeUp";
-import type { TrainingModule } from "@oruclass/types";
+import { responseDataOf, type TrainingModule } from "@oruclass/types";
 
 interface Props {
   module: TrainingModule;
@@ -16,10 +17,17 @@ export function ParticipantQnA({ module, trainingId }: Props) {
   const [question, setQuestion] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const { data: responses } = useModuleResponses(trainingId, module.id);
+  const myResponse = responses?.[0];
 
   const submit = async () => {
     setIsPending(true);
-    await submitResponse(module.id, { type: "qna", question: question.trim() });
+    const existingData = myResponse ? responseDataOf(myResponse.responseData, "qna") : null;
+    const previousQuestions: string[] = existingData?.questions || (existingData?.question ? [existingData.question] : []);
+    
+    const newQuestions = [...previousQuestions, question.trim()];
+    
+    await submitResponse(module.id, { type: "qna", questions: newQuestions });
     setSubmitted(true);
     setIsPending(false);
   };

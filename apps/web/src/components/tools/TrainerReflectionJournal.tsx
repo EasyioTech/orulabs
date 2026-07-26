@@ -10,7 +10,8 @@ import {  Clock,
   CheckCircle2,
 } from "lucide-react";
 import { SafeHTML } from "@/components/ui/SafeHTML";
-import { MessageCircle, Send } from "lucide-react";
+import { MessageCircle, Send, Maximize2, X } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
 
 interface Props {
   module: TrainingModule;
@@ -25,6 +26,7 @@ export function TrainerReflectionJournal({ module, trainingId }: Props) {
   const [commentingOn, setCommentingOn] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewContent, setPreviewContent] = useState<{title: string; html: string} | null>(null);
 
   const handleAddComment = async (responseId: string) => {
     if (!commentText.trim() || !workspaceId) return;
@@ -83,7 +85,17 @@ export function TrainerReflectionJournal({ module, trainingId }: Props) {
                     </div>
                   </div>
 
-                  <SafeHTML html={text || "No content"} className="text-gray-700 text-sm" />
+                  <div className="relative max-h-[120px] overflow-hidden rounded-md group">
+                    <SafeHTML html={text || "No content"} className="text-gray-700 text-sm" />
+                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+                    <button
+                      onClick={() => setPreviewContent({ title: r.user?.name ?? "Participant", html: text })}
+                      className="absolute bottom-1 right-1 p-1.5 bg-white border border-gray-200 rounded-md shadow-sm text-gray-500 hover:text-brand-600 hover:border-brand-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10"
+                      title="View full response"
+                    >
+                      <Maximize2 size={14} />
+                    </button>
+                  </div>
 
                   {comments.length > 0 && (
                     <div className="space-y-2 mt-2 bg-gray-50 p-3 rounded-md border border-gray-100">
@@ -143,6 +155,25 @@ export function TrainerReflectionJournal({ module, trainingId }: Props) {
           </div>
         )}
       </div>
+
+      <Dialog.Root open={!!previewContent} onOpenChange={(open) => !open && setPreviewContent(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 shadow-xl w-[90vw] max-w-2xl max-h-[85vh] overflow-y-auto z-50">
+            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+              <Dialog.Title className="text-lg font-bold text-gray-900">
+                {previewContent?.title}'s Reflection
+              </Dialog.Title>
+              <Dialog.Close className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                <X size={18} />
+              </Dialog.Close>
+            </div>
+            <div className="prose prose-sm max-w-none">
+              <SafeHTML html={previewContent?.html || ""} />
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

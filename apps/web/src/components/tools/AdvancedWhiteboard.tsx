@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import { Tldraw, useEditor } from "tldraw";
+import { Tldraw, useEditor, getSnapshot, loadSnapshot } from "tldraw";
 import "tldraw/tldraw.css";
 import { cn } from "@oruclass/utils";
 
@@ -21,7 +21,7 @@ export function AdvancedWhiteboard({ snapshot, onChange, readonly, className }: 
 
   const handleMount = useCallback((editor: any) => {
     if (snapshot && Object.keys(snapshot).length > 0) {
-      editor.store.loadSnapshot(snapshot);
+      loadSnapshot(editor.store, snapshot);
     }
     
     if (readonly) {
@@ -29,11 +29,17 @@ export function AdvancedWhiteboard({ snapshot, onChange, readonly, className }: 
     }
 
     if (onChange && !readonly) {
-      editor.store.listen(() => {
-        // Debounce or send snapshot directly
-        const currentSnapshot = editor.store.getSnapshot();
-        onChange(currentSnapshot);
-      });
+      let timeoutId: NodeJS.Timeout;
+      editor.store.listen((entry: any) => {
+        // Only sync if the change comes from the user (not remote) and affects the document
+        if (entry.source !== 'user') return;
+        
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          const currentSnapshot = getSnapshot(editor.store);
+          onChange(currentSnapshot);
+        }, 300); // 300ms debounce to simulate "pen up"
+      }, { scope: 'document', source: 'user' });
     }
   }, [snapshot, onChange, readonly]);
 
@@ -42,6 +48,7 @@ export function AdvancedWhiteboard({ snapshot, onChange, readonly, className }: 
       <div className="absolute inset-0" style={{ zIndex: 1 }}>
         <Tldraw 
           onMount={handleMount}
+          licenseKey={process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY}
         />
       </div>
     </div>

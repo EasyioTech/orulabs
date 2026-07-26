@@ -25,14 +25,10 @@ export function ParticipantStickyNotes({ module, trainingId }: Props) {
   useEffect(() => {
     const onCreate = ({ note }: { note: StickyNote }) =>
       setNotes((prev) => [...prev, note]);
-    const onPosition = ({ noteId, x, y }: { noteId: string; x: number; y: number }) =>
-      setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, x, y } : n)));
 
     socket.on("note:create", onCreate);
-    socket.on("note:position", onPosition);
     return () => {
       socket.off("note:create", onCreate);
-      socket.off("note:position", onPosition);
     };
   }, [socket]);
 
@@ -52,7 +48,18 @@ export function ParticipantStickyNotes({ module, trainingId }: Props) {
 
   const moveNote = (noteId: string, x: number, y: number) => {
     setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, x, y } : n)));
-    socket.emit("note:position", { trainingId, moduleId: module.id, noteId, x, y });
+  };
+
+  const arrangeNotes = () => {
+    setNotes((prev) =>
+      prev.map((n, i) => {
+        // Approximate a responsive grid using standard card dimensions
+        const columns = Math.max(1, Math.floor((window.innerWidth > 768 ? window.innerWidth - 300 : window.innerWidth) / 210));
+        const col = i % columns;
+        const row = Math.floor(i / columns);
+        return { ...n, x: col * 210 + 20, y: row * 120 + 20 };
+      })
+    );
   };
 
   return (
@@ -87,6 +94,13 @@ export function ParticipantStickyNotes({ module, trainingId }: Props) {
           className="px-3 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors"
         >
           Add
+        </button>
+        <button
+          onClick={arrangeNotes}
+          className="px-3 py-2 bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+          title="Arrange notes in a grid locally"
+        >
+          Arrange
         </button>
       </div>
 

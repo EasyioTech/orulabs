@@ -236,10 +236,10 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setVideoOpen((v) => !v)}
-              className={cn("p-1.5 rounded-md transition-colors", videoOpen ? "bg-brand-100 text-brand-700" : "text-gray-500 hover:bg-gray-100")}
+              className={cn("p-1.5 rounded-md transition-all duration-200", videoOpen ? "bg-brand-500 text-white shadow-sm shadow-brand-500/20" : "text-gray-500 hover:bg-gray-100")}
               title="Toggle Video Conference"
             >
-              <Video size={16} />
+              <Video size={16} className={cn(videoOpen && "animate-pulse")} />
             </button>
 
             {participantCount > 0 && (
@@ -296,17 +296,19 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
 
         {/* Module canvas */}
         <div className="flex-1 flex overflow-hidden bg-white relative">
-          {videoOpen && (
-            <div className="w-72 lg:w-96 border-r border-gray-100 bg-black flex-shrink-0">
-              <VideoConferenceRoom trainingId={trainingId} />
-            </div>
-          )}
-          <div className="flex-1 relative overflow-hidden">
+          <div className="flex-1 relative overflow-hidden w-full">
             <ModuleStopwatch canControl={canDo(role as TrainingRole | undefined, "pause_room")} />
             <div className="h-full overflow-hidden">
               {renderModuleArea()}
             </div>
           </div>
+          
+          {/* Floating Video Conference Dock */}
+          {videoOpen && (
+            <div className="fixed sm:absolute z-50 overflow-hidden shadow-2xl border border-white/10 inset-x-0 bottom-0 h-[40vh] rounded-t-2xl sm:rounded-2xl sm:bottom-6 sm:right-6 sm:left-auto sm:w-96 sm:h-[500px] bg-black animate-in slide-in-from-bottom-8 fade-in duration-300">
+              <VideoConferenceRoom trainingId={trainingId} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -368,7 +370,7 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
           {activeTab === "agenda" && (
             <AgendaPane trainingId={trainingId} workspaceId={activeWorkspaceId} />
           )}
-          {activeTab === "participants" && <ParticipantGrid />}
+          {activeTab === "participants" && <ParticipantGrid trainingId={trainingId} workspaceId={training.workspaceId} joinToken={training.joinToken} />}
           {activeTab === "responses" && <SessionDashboard training={training} />}
         </div>
       </div>

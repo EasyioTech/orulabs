@@ -4,18 +4,23 @@ import { useLiveSessionStore } from "@/store/liveSession";
 import { cn } from "@oruclass/utils";
 import { Users } from "lucide-react";
 
-export function ParticipantGrid() {
+import { LiveInviteModal } from "./LiveInviteModal";
+
+export function ParticipantGrid({ trainingId, workspaceId, joinToken }: { trainingId: string; workspaceId: string; joinToken: string }) {
   const participants = useLiveSessionStore((s) => s.participants);
-  const list = Array.from(participants.values());
-  const online = list.filter((p) => p.connectionStatus === "online").length;
+  const list = Array.from(participants.values()).filter((p) => p.connectionStatus === "online");
+  const online = list.length;
 
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">People</h3>
-        <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 rounded-md border border-green-100">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-[11px] font-semibold text-green-700">{online} Online</span>
+        <div className="flex items-center gap-2">
+          <LiveInviteModal trainingId={trainingId} workspaceId={workspaceId} joinToken={joinToken} />
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 rounded-md border border-green-100">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[11px] font-semibold text-green-700">{online} Online</span>
+          </div>
         </div>
       </div>
 
