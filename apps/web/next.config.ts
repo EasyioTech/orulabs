@@ -19,13 +19,16 @@ const nextConfig: NextConfig = {
     // 'unsafe-inline'/'unsafe-eval' are required by Next.js hydration (no nonce
     // pipeline in place). The remaining directives still block framing, plugin
     // content, and base-tag hijacking; the primary XSS sink is sanitized in SafeHTML.
-    const csp = [
+      const liveKitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880";
+      const liveKitHttpUrl = liveKitUrl.replace(/^ws/, "http");
+      
+      const csp = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      `connect-src 'self' ${apiOrigin} ${wsOrigin} ${sentryOrigin} https://cdn.tldraw.com https://unpkg.com ws://localhost:7880 wss://*.livekit.cloud https://*.livekit.cloud`.trim(),
+      `connect-src 'self' ${apiOrigin} ${wsOrigin} ${sentryOrigin} ${liveKitUrl} ${liveKitHttpUrl} https://cdn.tldraw.com https://unpkg.com wss://*.livekit.cloud https://*.livekit.cloud`.trim(),
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'",
