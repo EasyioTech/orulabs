@@ -13,3 +13,7 @@ export function getIO(): IO {
   if (!_io) throw new Error("Socket.IO instance not initialized");
   return _io;
 }
+
+export function tryGetIO(): IO | null {
+  return _io;
+}

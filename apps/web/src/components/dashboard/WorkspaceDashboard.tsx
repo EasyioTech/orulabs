@@ -126,13 +126,34 @@ function TrainingCard({ t, index }: { t: Training; index: number }) {
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
-          <Link
-            href={`/trainings/${t.id}/studio`}
-            data-tour={index === 0 ? "open-studio" : undefined}
-            className="text-xs px-5 py-2 bg-[#1a73e8] text-white rounded-md hover:bg-[#1557b0] transition-colors font-medium shadow-sm"
-          >
-            Open Studio
-          </Link>
+          <div className="flex gap-2">
+            {["live", "connecting", "paused"].includes(t.sessionStatus) ? (
+              <>
+                <Link
+                  href={`/trainings/${t.id}/live`}
+                  className="text-xs px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium shadow-sm flex items-center gap-1.5"
+                >
+                  <Play size={12} />
+                  Join Session
+                </Link>
+                <Link
+                  href={`/trainings/${t.id}/studio`}
+                  className="text-xs px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors font-medium"
+                  title="Open Studio"
+                >
+                  Studio
+                </Link>
+              </>
+            ) : (
+              <Link
+                href={`/trainings/${t.id}/studio`}
+                data-tour={index === 0 ? "open-studio" : undefined}
+                className="text-xs px-5 py-2 bg-[#1a73e8] text-white rounded-md hover:bg-[#1557b0] transition-colors font-medium shadow-sm"
+              >
+                Open Studio
+              </Link>
+            )}
+          </div>
           <Link
             href={`/trainings/${t.id}/analytics`}
             data-tour={index === 0 ? "analytics" : undefined}

@@ -6,7 +6,7 @@ import { apiClient } from "@/lib/api-client";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useDays } from "@/hooks/useDays";
 import { cn } from "@oruclass/utils";
-import { ChevronDown, Download, Users, Layers, Activity, Zap, BarChart3 } from "lucide-react";
+import { ChevronDown, Download, Users, Layers, Activity, Zap, BarChart3, Target, CheckCircle2, MessageSquare, ListTodo } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -17,9 +17,14 @@ import {
   Cell,
   CartesianGrid,
   AreaChart,
-  Area
+  Area,
+  PieChart,
+  Pie,
+  Legend
 } from "recharts";
 import { motion } from "framer-motion";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#f59e0b", "#3b82f6"];
 
@@ -31,6 +36,7 @@ interface ModuleStat {
   participantCount: number;
   completionRate: number;
   dayId?: string | null;
+  insights?: any;
 }
 
 interface AnalyticsData {
@@ -63,6 +69,41 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
   const [exportJobId, setExportJobId] = React.useState<string | null>(null);
   const [startDayIdx, setStartDayIdx] = React.useState<number>(0);
   const [endDayIdx, setEndDayIdx] = React.useState<number>(0);
+  const [isExportingPDF, setIsExportingPDF] = React.useState(false);
+
+  const handleExportPDF = async () => {
+    setIsExportingPDF(true);
+    try {
+      const dashboardElement = document.getElementById("analytics-dashboard-content");
+      if (!dashboardElement) return;
+
+      const canvas = await html2canvas(dashboardElement, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pdf.internal.pageSize.getHeight();
+
+      while (heightLeft >= 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pdf.internal.pageSize.getHeight();
+      }
+
+      pdf.save(`OruLabs-Analytics-${trainingId}.pdf`);
+    } catch (e) {
+      console.error("PDF Export failed", e);
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
 
   const { data: days } = useDays(workspaceId, trainingId);
 
@@ -130,10 +171,19 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
       ? Math.round(modules.reduce((sum, m) => sum + m.completionRate, 0) / modules.length)
       : 0;
 
-  // Fake sparkline data to make it look premium
-  const sparklineData1 = useMemo(() => Array.from({ length: 10 }, () => ({ value: Math.random() * 100 })), []);
-  const sparklineData2 = useMemo(() => Array.from({ length: 10 }, () => ({ value: Math.random() * 100 + 50 })), []);
-  const sparklineData3 = useMemo(() => Array.from({ length: 10 }, () => ({ value: Math.random() * 50 + avgCompletion })), [avgCompletion]);
+  // Real chronological sparkline data across modules
+  const sparklineData1 = useMemo(() => {
+    return modules.length > 0 ? modules.map((m) => ({ value: m.participantCount })) : [{ value: analytics?.totalParticipants ?? 0 }];
+  }, [modules, analytics?.totalParticipants]);
+  
+  const sparklineData2 = useMemo(() => {
+    // Just a steady slope representing modules being unlocked
+    return modules.length > 0 ? modules.map((_, i) => ({ value: i + 1 })) : [{ value: 0 }];
+  }, [modules]);
+  
+  const sparklineData3 = useMemo(() => {
+    return modules.length > 0 ? modules.map((m) => ({ value: m.completionRate })) : [{ value: 0 }];
+  }, [modules]);
 
   if (isLoading) {
     return (
@@ -147,9 +197,9 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
   }
 
   return (
-    <div className="space-y-8 bg-slate-50/50 min-h-full p-4 md:p-8 rounded-3xl">
+    <div id="analytics-dashboard-content" className="space-y-8 bg-slate-50/50 min-h-full p-4 md:p-8 rounded-3xl">
       {/* Header section with glassmorphism */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]" data-html2canvas-ignore>
         <div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900">
             Training Intelligence
@@ -159,9 +209,19 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
         <div className="flex items-center gap-3">
           {exportJobId && jobStatus?.status !== "completed" && (
             <span className="text-sm font-semibold text-indigo-600 animate-pulse flex items-center gap-2">
-              <Zap size={16} /> Generating Report...
+              <Zap size={16} /> Generating...
             </span>
           )}
+          <button
+            onClick={handleExportPDF}
+            disabled={isExportingPDF}
+            className="group relative px-6 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 disabled:opacity-70"
+          >
+            <span className="relative flex items-center gap-2 text-sm font-semibold">
+              <Download size={16} className="group-hover:-translate-y-0.5 transition-transform" />
+              {isExportingPDF ? "Building PDF…" : "Export PDF"}
+            </span>
+          </button>
           <button
             onClick={() => exportExcel.mutate()}
             disabled={exportExcel.isPending || !!exportJobId}
@@ -170,7 +230,7 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
             <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <span className="relative flex items-center gap-2 text-sm font-semibold">
               <Download size={16} className="group-hover:-translate-y-0.5 transition-transform" />
-              {exportExcel.isPending || !!exportJobId ? "Exporting…" : "Export Report"}
+              {exportExcel.isPending || !!exportJobId ? "Exporting…" : "Export Excel"}
             </span>
           </button>
         </div>
@@ -333,6 +393,152 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
             </ResponsiveContainer>
           </div>
         </motion.div>
+      )}
+
+      {/* Module Insights Section */}
+      {modules.filter(m => m.insights && Object.keys(m.insights).length > 0).length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {modules.filter(m => m.insights && Object.keys(m.insights).length > 0).map((m: ModuleStat) => {
+            const isQuiz = m.moduleType === "quiz";
+            const isPoll = m.moduleType === "poll";
+            const isPulse = m.moduleType === "pulse";
+            const isWordCloud = m.moduleType === "wordcloud";
+            const isReflection = m.moduleType === "reflection";
+            const isQna = m.moduleType === "qna";
+
+            return (
+              <motion.div
+                key={`insight-${m.moduleId}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] transition-all duration-300"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    {isQuiz && <Target size={20} />}
+                    {isPoll && <ListTodo size={20} />}
+                    {isPulse && <Activity size={20} />}
+                    {isWordCloud && <MessageSquare size={20} />}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900">{m.title}</h4>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{m.moduleType} Insights</p>
+                  </div>
+                </div>
+
+                {isQuiz && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-center bg-slate-50 rounded-2xl p-4 flex-1 mr-2">
+                        <p className="text-3xl font-black text-slate-900">{m.insights.averageScore}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Avg Score</p>
+                      </div>
+                      <div className="text-center bg-slate-50 rounded-2xl p-4 flex-1 ml-2">
+                        <p className="text-3xl font-black text-slate-900">{m.insights.maxPossible}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Max Score</p>
+                      </div>
+                    </div>
+                    {m.insights.questionStats && Object.keys(m.insights.questionStats).length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-xs font-bold text-slate-500 mb-2">Question Performance</p>
+                        <div className="space-y-2">
+                          {Object.entries(m.insights.questionStats as Record<string, any>).map(([qId, stat]) => (
+                            <div key={qId} className="flex items-center gap-3">
+                              <div className="flex-1 truncate text-sm font-semibold text-slate-700">{stat.text || "Question"}</div>
+                              <div className="flex items-center gap-2 text-xs font-bold">
+                                <span className="text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md" title="Correct">{stat.correct}</span>
+                                <span className="text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md" title="Incorrect">{stat.incorrect}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {isPoll && (
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={Object.entries(m.insights.distribution || {}).map(([key, val]) => ({
+                            name: m.insights.optionsMap?.[key] || key,
+                            value: val
+                          }))}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {Object.keys(m.insights.distribution || {}).map((_, idx) => (
+                            <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
+                        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', fontWeight: 600 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {isPulse && (
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={Object.entries(m.insights.distribution || {}).map(([key, val]) => ({ name: key, count: val }))}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="name" tick={{ fontSize: 24 }} axisLine={false} tickLine={false} />
+                        <Tooltip cursor={{ fill: "#f8fafc" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontWeight: 600 }} />
+                        <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={40} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {isWordCloud && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {m.insights.topWords?.map((w: any, idx: number) => (
+                      <span 
+                        key={idx} 
+                        className="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold shadow-sm inline-flex items-center"
+                        style={{ fontSize: `${Math.max(0.75, Math.min(1.5, 0.75 + (w.value * 0.1)))}rem` }}
+                      >
+                        {w.text} <span className="opacity-50 text-[10px] ml-1.5 bg-indigo-100 px-1.5 py-0.5 rounded-full">{w.value}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {(isReflection || isQna) && m.insights?.sentimentScore !== undefined && (
+                  <div>
+                    <div className="flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-6 mb-4">
+                      <p className="text-4xl font-black text-slate-900">
+                        {m.insights.sentimentScore > 0 ? "😊" : m.insights.sentimentScore < 0 ? "😔" : "😐"}
+                      </p>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Overall Tone</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-emerald-50 rounded-xl py-2">
+                        <p className="text-emerald-600 font-black">{m.insights.distribution?.Positive || 0}</p>
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase mt-0.5">Pos</p>
+                      </div>
+                      <div className="bg-slate-100 rounded-xl py-2">
+                        <p className="text-slate-600 font-black">{m.insights.distribution?.Neutral || 0}</p>
+                        <p className="text-[10px] font-bold text-slate-600 uppercase mt-0.5">Neu</p>
+                      </div>
+                      <div className="bg-rose-50 rounded-xl py-2">
+                        <p className="text-rose-600 font-black">{m.insights.distribution?.Negative || 0}</p>
+                        <p className="text-[10px] font-bold text-rose-600 uppercase mt-0.5">Neg</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
       )}
 
       {/* Enhanced Data Table */}

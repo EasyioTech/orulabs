@@ -18,6 +18,8 @@ export interface ClientToServerEvents {
   "module:setTimeLimit": (data: { trainingId: string; moduleId: string; timeLimitSeconds: number }) => void;
   heartbeat: () => void;
   "chat:send": (data: { trainingId: string; text: string }) => void;
+  "participant:focus_lost": (data: { trainingId: string }) => void;
+  "participant:focus_restored": (data: { trainingId: string }) => void;
 }
 
 // Server → Client events
@@ -40,6 +42,7 @@ export interface ServerToClientEvents {
   "session:ended": () => void;
   "session:reset": () => void;
   "chat:message": (data: { id: string; userId: string; senderName: string; text: string; sentAt: string }) => void;
+  "trainer:attention_alert": (data: { userId: string; userName: string; isFocused: boolean }) => void;
   error: (data: { code: string; message: string }) => void;
 }
 

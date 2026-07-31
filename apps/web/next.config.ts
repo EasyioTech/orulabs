@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
       "font-src 'self' data: https://fonts.gstatic.com https://cdn.tldraw.com",
       `connect-src 'self' ${apiOrigin} ${wsOrigin} ${sentryOrigin} ${liveKitUrl} ${liveKitHttpUrl} https://cdn.tldraw.com https://unpkg.com wss://*.livekit.cloud https://*.livekit.cloud`.trim(),
       "frame-ancestors 'none'",
+      "frame-src 'self' https://www.youtube.com https://youtube.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

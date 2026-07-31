@@ -13,21 +13,21 @@ import * as Y from "yjs";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuthStore } from "@/store/auth";
 import { cn } from "@oruclass/utils";
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, Link as LinkIcon, Palette, Undo, Redo, WifiOff, RefreshCw } from "lucide-react";
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, Link as LinkIcon, Palette, Undo, Redo, WifiOff, RefreshCw, Loader2 } from "lucide-react";
 
 const MenuBar = ({ editor }: { editor: Editor | null }) => {
   const toggleLink = useCallback(() => {
-    if (!editor) return
-    const previousUrl = editor.getAttributes('link').href
-    const url = window.prompt('URL', previousUrl)
+    if (!editor) return;
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('URL', previousUrl);
 
-    if (url === null) return
+    if (url === null) return;
     if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run()
-      return
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
     }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
-  }, [editor])
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }, [editor]);
 
   if (!editor) return null;
 
@@ -35,161 +35,56 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
 
   return (
     <div className="flex flex-wrap items-center gap-1 p-1 bg-gray-50 border-b border-gray-100 rounded-t-lg">
-      <button
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        disabled={!editor.can().chain().focus().toggleBold().run()}
-        className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("bold") && "bg-gray-200 text-brand-600")}
-        title="Bold"
-        type="button"
-      >
-        <Bold size={16} />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        disabled={!editor.can().chain().focus().toggleItalic().run()}
-        className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("italic") && "bg-gray-200 text-brand-600")}
-        title="Italic"
-        type="button"
-      >
-        <Italic size={16} />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("underline") && "bg-gray-200 text-brand-600")}
-        title="Underline"
-        type="button"
-      >
-        <UnderlineIcon size={16} />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        disabled={!editor.can().chain().focus().toggleStrike().run()}
-        className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("strike") && "bg-gray-200 text-brand-600")}
-        title="Strikethrough"
-        type="button"
-      >
-        <Strikethrough size={16} />
-      </button>
-      
+      <button onClick={() => editor.chain().focus().toggleBold().run()} disabled={!editor.can().chain().focus().toggleBold().run()} className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("bold") && "bg-gray-200 text-brand-600")} title="Bold" type="button"><Bold size={16} /></button>
+      <button onClick={() => editor.chain().focus().toggleItalic().run()} disabled={!editor.can().chain().focus().toggleItalic().run()} className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("italic") && "bg-gray-200 text-brand-600")} title="Italic" type="button"><Italic size={16} /></button>
+      <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("underline") && "bg-gray-200 text-brand-600")} title="Underline" type="button"><UnderlineIcon size={16} /></button>
+      <button onClick={() => editor.chain().focus().toggleStrike().run()} disabled={!editor.can().chain().focus().toggleStrike().run()} className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("strike") && "bg-gray-200 text-brand-600")} title="Strikethrough" type="button"><Strikethrough size={16} /></button>
       <div className="w-px h-5 bg-gray-300 mx-1" />
-      
-      <button
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("bulletList") && "bg-gray-200 text-brand-600")}
-        title="Bullet List"
-        type="button"
-      >
-        <List size={16} />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("orderedList") && "bg-gray-200 text-brand-600")}
-        title="Ordered List"
-        type="button"
-      >
-        <ListOrdered size={16} />
-      </button>
-      
+      <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("bulletList") && "bg-gray-200 text-brand-600")} title="Bullet List" type="button"><List size={16} /></button>
+      <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("orderedList") && "bg-gray-200 text-brand-600")} title="Ordered List" type="button"><ListOrdered size={16} /></button>
       <div className="w-px h-5 bg-gray-300 mx-1" />
-
-      <button
-        onClick={toggleLink}
-        className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("link") && "bg-gray-200 text-brand-600")}
-        title="Link"
-        type="button"
-      >
-        <LinkIcon size={16} />
-      </button>
-
+      <button onClick={toggleLink} className={cn("p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors", editor.isActive("link") && "bg-gray-200 text-brand-600")} title="Link" type="button"><LinkIcon size={16} /></button>
       <div className="flex items-center gap-0.5 ml-1 relative group">
-        <button
-          className="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors flex items-center gap-1"
-          title="Text Color"
-          type="button"
-        >
-          <Palette size={16} />
-        </button>
+        <button className="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors flex items-center gap-1" title="Text Color" type="button"><Palette size={16} /></button>
         <div className="absolute top-full left-0 mt-1 p-2 bg-white border border-gray-100 rounded-lg shadow-lg hidden group-hover:flex flex-wrap w-32 gap-1 z-10">
           {colors.map((color) => (
-            <button
-              key={color}
-              type="button"
-              className="w-6 h-6 rounded border border-gray-100"
-              style={{ backgroundColor: color }}
-              onClick={() => editor.chain().focus().setColor(color).run()}
-            />
+            <button key={color} type="button" className="w-6 h-6 rounded border border-gray-100" style={{ backgroundColor: color }} onClick={() => editor.chain().focus().setColor(color).run()} />
           ))}
         </div>
       </div>
-
       <div className="flex-1" />
-
-      <button
-        onClick={() => editor.chain().focus().undo().run()}
-        disabled={!editor.can().chain().focus().undo().run()}
-        className="p-1.5 rounded hover:bg-gray-200 text-gray-500 disabled:opacity-50 transition-colors"
-        title="Undo"
-        type="button"
-      >
-        <Undo size={16} />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().redo().run()}
-        disabled={!editor.can().chain().focus().redo().run()}
-        className="p-1.5 rounded hover:bg-gray-200 text-gray-500 disabled:opacity-50 transition-colors"
-        title="Redo"
-        type="button"
-      >
-        <Redo size={16} />
-      </button>
+      <button onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().chain().focus().undo().run()} className="p-1.5 rounded hover:bg-gray-200 text-gray-500 disabled:opacity-50 transition-colors" title="Undo" type="button"><Undo size={16} /></button>
+      <button onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().chain().focus().redo().run()} className="p-1.5 rounded hover:bg-gray-200 text-gray-500 disabled:opacity-50 transition-colors" title="Redo" type="button"><Redo size={16} /></button>
     </div>
   );
 };
 
-interface LiveDocumentEditorProps {
-  documentId: string;
-  initialContent?: string;
-  minHeight?: string;
-}
-
 const colorArray = ["#f87171", "#fb923c", "#fbbf24", "#34d399", "#38bdf8", "#818cf8", "#c084fc", "#f472b6"];
 
-export function LiveDocumentEditor({ documentId, initialContent, minHeight = "400px" }: LiveDocumentEditorProps) {
+function EditorView({ provider, ydoc, initialContent, minHeight }: { provider: HocuspocusProvider, ydoc: Y.Doc, initialContent?: string, minHeight: string }) {
   const user = useAuthStore((s) => s.user);
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
 
-  // Create provider and doc only once per documentId
-  const { provider, ydoc } = useMemo(() => {
-    const doc = new Y.Doc();
-    const wsUrl = process.env.NEXT_PUBLIC_SOCKET_URL
-      ? process.env.NEXT_PUBLIC_SOCKET_URL.replace(/^http/, "ws") + "/collaboration"
-      : (typeof window !== "undefined" ? window.location.origin.replace(/^http/, "ws") + "/collaboration" : "ws://localhost:3001/collaboration");
-      
-    const prov = new HocuspocusProvider({
-      url: wsUrl,
-      name: documentId,
-      document: doc,
-    });
-    return { provider: prov, ydoc: doc };
-  }, [documentId]);
-
   useEffect(() => {
-    provider.on("status", ({ status }: { status: string }) => {
+    const handleStatus = ({ status }: { status: string }) => {
       if (status === "connected") setStatus("connected");
       else if (status === "connecting") setStatus("connecting");
       else setStatus("disconnected");
-    });
-    
-    return () => {
-      provider.destroy();
-      ydoc.destroy();
     };
-  }, [provider, ydoc]);
+    
+    // Set initial status
+    if ((provider as any).status === "connected") setStatus("connected");
+    
+    provider.on("status", handleStatus);
+    return () => {
+      provider.off("status", handleStatus);
+    };
+  }, [provider]);
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // @ts-ignore - history is provided by Collaboration extension but types might be outdated
+        // @ts-ignore
         history: false,
       }),
       Underline,
@@ -217,16 +112,12 @@ export function LiveDocumentEditor({ documentId, initialContent, minHeight = "40
     },
   });
 
-  // Seed initial content if document is completely empty
   useEffect(() => {
-    if (editor && initialContent && status === "connected") {
-      // Small timeout to allow Yjs to sync current state
-      setTimeout(() => {
-        if (editor.isEmpty) {
-          editor.commands.setContent(initialContent);
-        }
-      }, 500);
-    }
+    if (!editor || !initialContent || status !== "connected") return;
+    const t = setTimeout(() => {
+      if (editor.isEmpty) editor.commands.setContent(initialContent);
+    }, 500);
+    return () => clearTimeout(t);
   }, [editor, initialContent, status]);
 
   return (
@@ -254,7 +145,6 @@ export function LiveDocumentEditor({ documentId, initialContent, minHeight = "40
         </div>
       </div>
       
-      {/* Required for custom cursor styles in tiptap collaboration */}
       <style dangerouslySetInnerHTML={{__html: `
         .collaboration-cursor__caret {
           border-left: 1px solid #0d0d0d;
@@ -282,4 +172,44 @@ export function LiveDocumentEditor({ documentId, initialContent, minHeight = "40
       `}} />
     </div>
   );
+}
+
+interface LiveDocumentEditorProps {
+  documentId: string;
+  initialContent?: string;
+  minHeight?: string;
+}
+
+export function LiveDocumentEditor({ documentId, initialContent, minHeight = "400px" }: LiveDocumentEditorProps) {
+  const [collab, setCollab] = useState<{ provider: HocuspocusProvider, ydoc: Y.Doc } | null>(null);
+
+  useEffect(() => {
+    const doc = new Y.Doc();
+    const wsUrl = process.env.NEXT_PUBLIC_SOCKET_URL
+      ? process.env.NEXT_PUBLIC_SOCKET_URL.replace(/^http/, "ws") + "/collaboration"
+      : (process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? window.location.origin : "ws://localhost:3001")).replace(/^http/, "ws") + "/collaboration";
+      
+    const prov = new HocuspocusProvider({
+      url: wsUrl,
+      name: documentId,
+      document: doc,
+    });
+    
+    setCollab({ provider: prov, ydoc: doc });
+    
+    return () => {
+      prov.destroy();
+    };
+  }, [documentId]);
+
+  if (!collab) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50/50 border border-gray-200 rounded-xl overflow-hidden shadow-sm items-center justify-center text-gray-500 text-sm">
+        <Loader2 className="w-5 h-5 animate-spin mb-2" />
+        Initializing document...
+      </div>
+    );
+  }
+
+  return <EditorView key={collab.ydoc.guid} provider={collab.provider} ydoc={collab.ydoc} initialContent={initialContent} minHeight={minHeight} />;
 }

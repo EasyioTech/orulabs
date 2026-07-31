@@ -25,6 +25,7 @@ import { registerSocketHandlers } from "./socket/handlers";
 import { setIO } from "./socket/io-instance";
 import { startExportWorker } from "./jobs/exportAnalytics.job";
 import { startDigestWorker } from "./jobs/sendSessionDigest.job";
+import { startHeartbeatSweepWorker } from "./jobs/sweepStaleHeartbeats.job";
 import { connectRedis, pubClient, subClient, redis } from "./db/redis";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { logger } from "./utils/logger";
@@ -182,6 +183,7 @@ export const io = new SocketIOServer<
   },
   pingTimeout: 20000,
   pingInterval: 25000,
+  destroyUpgrade: false,
 });
 setIO(io);
 
@@ -205,6 +207,7 @@ registerSocketHandlers(io);
 
 startExportWorker();
 startDigestWorker();
+startHeartbeatSweepWorker();
 
 // Connect Redis (app data + adapter pub/sub) before accepting traffic so the Socket.IO
 // Redis adapter can fan-out events across instances. If Redis is unreachable we still

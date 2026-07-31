@@ -159,6 +159,7 @@ trainingsRouter.get("/:id", async (c) => {
     ),
     with: {
       modules: { orderBy: (m, { asc }) => [asc(m.position)] },
+      days: { orderBy: (d, { asc }) => [asc(d.dayNumber)] },
       facilitators: { with: { user: true } },
       participants: { with: { user: true } },
       pendingInvitations: {

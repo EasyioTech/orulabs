@@ -49,12 +49,14 @@ export function useResponseSubmit(trainingId: string) {
           return;
         }
 
-        socket.emit(
+        // 5s timeout: if server never acks (network stall, crash) fall back to queue
+        // instead of leaving the promise permanently unresolved.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (socket.timeout(5000) as any).emit(
           "response:submit",
           { trainingId, moduleId, responseData: responseData as Record<string, unknown> },
-          (result) => {
-            if (!result.ok) {
-              // Save to queue as fallback — will retry on reconnect
+          (err: Error | null, result?: { ok: boolean; error?: string }) => {
+            if (err || !result?.ok) {
               queueResponse(trainingId, moduleId, responseData);
             }
             resolve();

@@ -15,7 +15,7 @@ import {
 } from "../db/schema";
 import { getOrCreateState, removeParticipant, persistState, restoreState } from "./state";
 import { logger } from "../utils/logger";
-import { DrawUpdateSchema, DrawClearSchema, DrawSyncSchema, NoteCreateSchema, NotePositionSchema, TimerSyncSchema, ParticipantJoinSchema, ModuleUnlockSchema, ResponseSubmitSchema, StopwatchActionSchema, ModuleSetTimeLimitSchema } from "@oruclass/validators";
+import { DrawUpdateSchema, DrawClearSchema, DrawSyncSchema, NoteCreateSchema, NotePositionSchema, TimerSyncSchema, ParticipantJoinSchema, ModuleUnlockSchema, ResponseSubmitSchema, StopwatchActionSchema, ModuleSetTimeLimitSchema, ChatSendSchema } from "@oruclass/validators";
 import { USER_NAME_CACHE_TTL_MS, USER_NAME_CACHE_MAX } from "../config/limits";
 
 // Small in-process cache for socket-join user lookups. Avoids hammering the
@@ -194,7 +194,12 @@ function makePerEventRateLimiter() {
 export function registerSocketHandlers(io: IO): void {
   io.on("connection", (socket: AppSocket) => {
     // userId is set by JWT handshake middleware in index.ts — never trust client payload
-    const userId = socket.data.userId!;
+    const userId = socket.data.userId;
+    if (!userId) {
+      socket.emit("error", { code: "UNAUTHORIZED", message: "missing auth" });
+      socket.disconnect(true);
+      return;
+    }
     logger.debug({ socketId: socket.id, userId }, "socket connected");
 
     const isAllowed = makePerEventRateLimiter();
@@ -734,8 +739,17 @@ export function registerSocketHandlers(io: IO): void {
           socket.emit("error", { code: "BAD_PAYLOAD", message: "invalid draw:sync payload" });
           return;
         }
-        const { trainingId, moduleId, strokes } = parsed.data;
-        socket.to(`training:${trainingId}`).emit("draw:sync", { moduleId, userId, strokes: strokes as StrokeData[] });
+        const { trainingId, moduleId, strokes, snapshot } = parsed.data;
+        if (!strokes && !snapshot) {
+          socket.emit("error", { code: "BAD_PAYLOAD", message: "draw:sync requires strokes or snapshot" });
+          return;
+        }
+        socket.to(`training:${trainingId}`).emit("draw:sync", {
+          moduleId,
+          userId,
+          strokes: strokes as StrokeData[] | undefined,
+          snapshot: snapshot as Record<string, unknown> | undefined,
+        });
       }),
     );
 
@@ -828,22 +842,49 @@ export function registerSocketHandlers(io: IO): void {
     });
 
     // ── CHAT ──────────────────────────────────────────────────────────────────
-    // In-memory only; messages are not persisted to DB. They live only while
-    // the session socket room is active (fine for a live training chat).
+    // In-memory only; messages are not persisted to DB.
     socket.on("chat:send", async (payload: unknown) => {
-      if (typeof payload !== "object" || payload === null) return;
-      const { trainingId: tid, text } = payload as Record<string, unknown>;
-      if (typeof tid !== "string" || typeof text !== "string") return;
-      if (!text.trim() || text.length > 2000) return;
+      const parsed = ChatSendSchema.safeParse(payload);
+      if (!parsed.success) return; // silently drop malformed chat
+      const { trainingId: tid, text } = parsed.data; // text is HTML-stripped by the schema transform
+
+      // Verify sender is still a member of this training room.
+      if (socket.data.trainingId !== tid) return;
 
       const senderName = await getUserName(userId);
-      // Broadcast to everyone in the room INCLUDING the sender so they see their own message
       io.to(`training:${tid}`).emit("chat:message", {
         id: `${socket.id}-${Date.now()}`,
         userId,
         senderName,
-        text: text.trim(),
+        text,
         sentAt: new Date().toISOString(),
+      });
+    });
+
+    // ── ATTENTION TRACKING ──────────────────────────────────────────────────
+    socket.on("participant:focus_lost", async (payload: unknown) => {
+      const tid = (payload as any)?.trainingId;
+      if (!tid || socket.data.trainingId !== tid) return;
+
+      const userName = await getUserName(userId);
+      // Broadcast to the trainers only!
+      io.to(`training:${tid}:trainers`).emit("trainer:attention_alert", {
+        userId,
+        userName,
+        isFocused: false,
+      });
+    });
+
+    socket.on("participant:focus_restored", async (payload: unknown) => {
+      const tid = (payload as any)?.trainingId;
+      if (!tid || socket.data.trainingId !== tid) return;
+
+      const userName = await getUserName(userId);
+      // Broadcast to the trainers only!
+      io.to(`training:${tid}:trainers`).emit("trainer:attention_alert", {
+        userId,
+        userName,
+        isFocused: true,
       });
     });
   });

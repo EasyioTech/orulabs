@@ -105,10 +105,13 @@ export const DrawClearSchema = z.object({
   moduleId: z.string().uuid(),
 });
 
+// strokes: legacy stroke-array sync; snapshot: tldraw full-state sync.
+// Exactly one must be present — validated in the handler after parsing.
 export const DrawSyncSchema = z.object({
   trainingId: z.string().uuid(),
   moduleId: z.string().uuid(),
-  strokes: z.array(StrokeSchema).max(5_000),
+  strokes: z.array(StrokeSchema).max(5_000).optional(),
+  snapshot: z.record(z.unknown()).optional(),
 });
 
 export const StickyNoteSchema = z.object({
@@ -209,6 +212,12 @@ export const AssignFacilitatorSchema = z.object({
   userId: z.string(),
   role: TrainingRoleSchema,
   assignedModules: z.array(z.string().uuid()).default([]),
+});
+
+export const ChatSendSchema = z.object({
+  trainingId: z.string().uuid(),
+  // Strip HTML tags server-side so a bad actor can't inject markup into the chat room.
+  text: z.string().min(1).max(2000).transform((t) => t.trim().replace(/<[^>]*>/g, "")),
 });
 
 export type CreateTrainingInput = z.infer<typeof CreateTrainingSchema>;

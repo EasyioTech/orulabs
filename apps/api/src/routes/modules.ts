@@ -257,20 +257,30 @@ modulesRouter.post(
     const { trainingId } = c.req.param();
     const { order } = await parseBody(c, ReorderModulesSchema);
 
-    await db.transaction(async (tx) => {
-      for (const [i, { id }] of order.entries()) {
-        await tx
-          .update(trainingModules)
-          .set({ position: -(i + 1), updatedAt: new Date() })
-          .where(and(eq(trainingModules.id, id), eq(trainingModules.trainingId, trainingId)));
+    try {
+      await db.transaction(async (tx) => {
+        for (const [i, { id }] of order.entries()) {
+          await tx
+            .update(trainingModules)
+            .set({ position: -(i + 1), updatedAt: new Date() })
+            .where(and(eq(trainingModules.id, id), eq(trainingModules.trainingId, trainingId)));
+        }
+        for (const { id, position } of order) {
+          await tx
+            .update(trainingModules)
+            .set({ position, updatedAt: new Date() })
+            .where(and(eq(trainingModules.id, id), eq(trainingModules.trainingId, trainingId)));
+        }
+      });
+    } catch (err: unknown) {
+      // Two trainers reordering simultaneously can race on the unique (trainingId, position)
+      // constraint. Surface it as 409 so the client can retry.
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("unique") || msg.includes("duplicate")) {
+        return c.json({ error: "Reorder conflict — another trainer is editing the order. Please try again." }, 409);
       }
-      for (const { id, position } of order) {
-        await tx
-          .update(trainingModules)
-          .set({ position, updatedAt: new Date() })
-          .where(and(eq(trainingModules.id, id), eq(trainingModules.trainingId, trainingId)));
-      }
-    });
+      throw err;
+    }
 
     return c.json({ success: true });
   },

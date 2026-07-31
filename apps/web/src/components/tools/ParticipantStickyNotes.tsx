@@ -51,10 +51,10 @@ export function ParticipantStickyNotes({ module, trainingId }: Props) {
   };
 
   const arrangeNotes = () => {
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
     setNotes((prev) =>
       prev.map((n, i) => {
-        // Approximate a responsive grid using standard card dimensions
-        const columns = Math.max(1, Math.floor((window.innerWidth > 768 ? window.innerWidth - 300 : window.innerWidth) / 210));
+        const columns = Math.max(1, Math.floor((vw > 768 ? vw - 300 : vw) / 210));
         const col = i % columns;
         const row = Math.floor(i / columns);
         return { ...n, x: col * 210 + 20, y: row * 120 + 20 };

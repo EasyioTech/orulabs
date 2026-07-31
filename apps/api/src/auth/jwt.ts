@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { randomUUID } from "crypto";
 
 // Never silently fall back to a known secret in production — forged tokens
 // would be trivially mintable. Fail fast at boot instead.
@@ -46,6 +47,7 @@ export async function signRefreshToken(userId: string): Promise<string> {
   return new SignJWT({ userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(issuer)
+    .setJti(randomUUID())
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_EXPIRY)
     .sign(secret);

@@ -28,6 +28,7 @@ export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
   const [videoOpen, setVideoOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
+  const [hasLostFocus, setHasLostFocus] = useState(false);
   const user = useAuthStore((s) => s.user);
   const { data: training } = useParticipantTraining(trainingId);
   const socket = useSocketSession(trainingId);
@@ -38,6 +39,25 @@ export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
   const isPaused = useLiveSessionStore((s) => s.isPaused);
   const flushingRef = useRef(false);
   const boundsRef = useRef<HTMLDivElement>(null);
+
+  // Track visibility (focus tracking)
+  useEffect(() => {
+    if (!socket || !trainingId || training?.sessionStatus !== "live") return;
+    
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        socket.emit("participant:focus_lost", { trainingId });
+        setHasLostFocus(true);
+      } else {
+        socket.emit("participant:focus_restored", { trainingId });
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [socket, trainingId, training?.sessionStatus]);
 
   // Flush any queued offline responses when reconnected
   const flushQueue = useCallback(() => {
@@ -243,6 +263,27 @@ export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
             onClose={() => setChatOpen(false)}
             onUnreadChange={(updater) => setChatUnread(updater)}
           />
+        )}
+
+        {/* Attention Tracking Blocker */}
+        {hasLostFocus && (
+          <div className="absolute inset-0 z-50 bg-gray-900/90 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm pointer-events-auto">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <WifiOff size={32} /> 
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Attention Required</h3>
+              <p className="text-gray-600 mb-6">
+                You switched tabs or left the session. This session requires your full attention. The trainer has been notified.
+              </p>
+              <button
+                onClick={() => setHasLostFocus(false)}
+                className="w-full py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors"
+              >
+                I'm back, resume session
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

@@ -61,6 +61,7 @@ import {
   FileText,
   Link2,
   Lock,
+  Play,
 } from "lucide-react";
 import { SafeHTML } from "@/components/ui/SafeHTML";
 
@@ -1529,10 +1530,10 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
           {(!myRole || canDo(myRole, "pause_room")) && (
             <Link
               href={`/trainings/${trainingId}/live`}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm shadow-brand-200 w-full sm:w-auto shrink-0"
+              className={cn("flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm w-full sm:w-auto shrink-0", ["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? "bg-green-600 hover:bg-green-700 shadow-green-200" : "bg-brand-600 hover:bg-brand-700 shadow-brand-200")}
             >
-              <Radio size={14} />
-              Go Live
+              {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? <Play size={14} /> : <Radio size={14} />}
+              {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? "Join Session" : "Go Live"}
             </Link>
           )}
         </div>
@@ -1595,10 +1596,10 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
         {(!myRole || canDo(myRole, "pause_room")) && (
           <Link
             href={`/trainings/${trainingId}/live`}
-            className="flex items-center justify-center gap-2 px-6 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-full text-sm font-medium transition-colors shadow-sm w-full sm:w-auto shrink-0"
+            className={cn("flex items-center justify-center gap-2 px-6 py-2 text-white rounded-full text-sm font-medium transition-colors shadow-sm w-full sm:w-auto shrink-0", ["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? "bg-green-600 hover:bg-green-700" : "bg-[#1a73e8] hover:bg-[#1557b0]")}
           >
-            <Radio size={16} />
-            Go Live
+            {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? <Play size={16} /> : <Radio size={16} />}
+            {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? "Join Session" : "Go Live"}
           </Link>
         )}
       </div>

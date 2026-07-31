@@ -55,6 +55,7 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
   const boundsRef = useRef<HTMLDivElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
+  const [attentionAlerts, setAttentionAlerts] = useState<{ id: string; message: string }[]>([]);
 
   const user = useAuthStore((s) => s.user);
   const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId) ?? "";
@@ -131,9 +132,22 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
     };
     socket.on("session:submission_update", handleSubmissionUpdate);
 
+    const handleAttentionAlert = (data: { userId: string; userName: string; isFocused: boolean }) => {
+      if (!data.isFocused) {
+        const msg = `${data.userName || 'A participant'} has switched tabs (lost focus).`;
+        const id = Math.random().toString();
+        setAttentionAlerts((prev) => [...prev, { id, message: msg }]);
+        setTimeout(() => {
+          setAttentionAlerts((prev) => prev.filter((a) => a.id !== id));
+        }, 5000);
+      }
+    };
+    socket.on("trainer:attention_alert", handleAttentionAlert);
+
     return () => {
       socket.off("connect", handleConnect);
       socket.off("session:submission_update", handleSubmissionUpdate);
+      socket.off("trainer:attention_alert", handleAttentionAlert);
     };
   }, [user, trainingId, socket, training?.sessionStatus, setSessionStats]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -401,6 +415,22 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
           {activeTab === "participants" && <ParticipantGrid trainingId={trainingId} workspaceId={training.workspaceId} joinToken={training.joinToken} />}
           {activeTab === "responses" && <SessionDashboard training={training} />}
         </div>
+      </div>
+
+      {/* Attention Alerts Toast Container */}
+      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+        {attentionAlerts.map((alert) => (
+          <div
+            key={alert.id}
+            className="bg-white border-l-4 border-red-500 shadow-lg rounded-md p-4 flex items-start gap-3 w-80 animate-in slide-in-from-right duration-300"
+          >
+            <WifiOff className="text-red-500 shrink-0 mt-0.5" size={20} />
+            <div>
+              <p className="text-sm font-bold text-gray-900">Attention Lost</p>
+              <p className="text-xs text-gray-600 mt-1">{alert.message}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
