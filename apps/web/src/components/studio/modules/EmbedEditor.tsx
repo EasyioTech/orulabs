@@ -41,13 +41,13 @@ if (module.moduleType === "embed") {
         </div>
 
         {embeds.length === 0 && (
-          <div className="py-5 text-center bg-gray-50 rounded-xl border border-dashed border-gray-100">
+          <div className="py-5 text-center bg-gray-50 rounded border border-dashed border-gray-100">
             <p className="text-xs text-gray-400">No resources added yet.</p>
           </div>
         )}
 
         {embeds.map((embed: any, i: number) => (
-          <div key={embed.id} className="bg-gray-50 rounded-xl border border-gray-100 p-3 space-y-3 relative group">
+          <div key={embed.id} className="bg-gray-50 rounded border border-gray-100 p-3 space-y-3 relative group">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-gray-500 uppercase">Embed {i + 1}</span>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -62,7 +62,7 @@ if (module.moduleType === "embed") {
                 type="url"
                 value={embed.url ?? ""}
                 onChange={(e) => updateEmbed(i, { url: e.target.value })}
-                className="w-full px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+                className="w-full px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                 placeholder="https://example.com"
               />
             </div>
@@ -71,7 +71,7 @@ if (module.moduleType === "embed") {
               <input
                 value={embed.title ?? ""}
                 onChange={(e) => updateEmbed(i, { title: e.target.value })}
-                className="w-full px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+                className="w-full px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                 placeholder="Title to display above embed"
               />
             </div>
@@ -81,7 +81,7 @@ if (module.moduleType === "embed") {
                 value={embed.description ?? ""}
                 onChange={(e) => updateEmbed(i, { description: e.target.value })}
                 rows={2}
-                className="w-full px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                className="w-full px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#1a73e8] resize-none"
                 placeholder="Add some context or instructions..."
               />
             </div>

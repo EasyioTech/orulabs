@@ -16,7 +16,7 @@ import { GuestUpgradeBanner } from "./GuestUpgradeBanner";
 import { DraggableVideoDock } from "./DraggableVideoDock";
 import { LiveChatDock } from "./LiveChatDock";
 import { cn } from "@oruclass/utils";
-import { WifiOff, RefreshCw, Video, MessageSquare, PauseCircle } from "lucide-react";
+import { WifiOff, RefreshCw, Video, MessageSquare, PauseCircle, Mic, MicOff, Camera, MonitorUp, PhoneOff, Hand } from "lucide-react";
 
 function clearQueue(trainingId: string) {
   try {
@@ -26,10 +26,13 @@ function clearQueue(trainingId: string) {
 
 export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
   const [videoOpen, setVideoOpen] = useState(false);
+  const [micMuted, setMicMuted] = useState(false);
+  const [cameraMuted, setCameraMuted] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
   const [hasLostFocus, setHasLostFocus] = useState(false);
   const user = useAuthStore((s) => s.user);
+
   const { data: training } = useParticipantTraining(trainingId);
   const socket = useSocketSession(trainingId);
   const activeModule = useLiveSessionStore((s) => s.activeModule);
@@ -176,25 +179,6 @@ export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
             ?? { label: training.sessionStatus, dot: "bg-gray-400", pill: "bg-gray-50 text-gray-500 border-gray-100" };
           return (
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setVideoOpen((v) => !v)}
-                className={cn("p-1.5 rounded-md transition-all duration-200", videoOpen ? "bg-brand-500 text-white shadow-sm shadow-brand-500/20" : "text-gray-500 hover:bg-gray-100")}
-                title="Toggle Video Conference"
-              >
-                <Video size={16} className={cn(videoOpen && "animate-pulse")} />
-              </button>
-              <button
-                onClick={() => { setChatOpen((v) => !v); setChatUnread(0); }}
-                className={cn("relative p-1.5 rounded-md transition-all duration-200", chatOpen ? "bg-brand-500 text-white shadow-sm shadow-brand-500/20" : "text-gray-500 hover:bg-gray-100")}
-                title="Toggle Chat"
-              >
-                <MessageSquare size={16} />
-                {chatUnread > 0 && !chatOpen && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
-                    {chatUnread > 9 ? "9+" : chatUnread}
-                  </span>
-                )}
-              </button>
               <div className={cn("flex items-center gap-1.5 border rounded-full px-2.5 py-1", cfg.pill)}>
                 <span className="relative flex h-1.5 w-1.5 shrink-0">
                   {(training.sessionStatus === "live" || training.sessionStatus === "connecting") && (
@@ -285,6 +269,113 @@ export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* BOTTOM NAV (Google Meet Style) */}
+      <div className="h-16 border-t border-gray-100 bg-white flex items-center justify-between px-6 flex-shrink-0 z-20 w-full">
+        <div className="w-1/3 min-w-0 flex items-center justify-start">
+          <span className="text-[14px] text-gray-700 truncate block font-medium">
+            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull; {training.title}
+          </span>
+        </div>
+
+        <div className="w-1/3 min-w-0 flex items-center justify-center gap-3">
+          {training.type !== "in_person" ? (
+            <>
+              <button
+                onClick={() => {
+                  setMicMuted(v => !v);
+                  alert(`Microphone ${!micMuted ? "muted" : "unmuted"}`);
+                }}
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
+                  micMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )}
+                title="Toggle Microphone"
+              >
+                {micMuted ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
+              <button
+                onClick={() => {
+                  setCameraMuted(v => !v);
+                  alert(`Camera ${!cameraMuted ? "turned off" : "turned on"}`);
+                }}
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
+                  cameraMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )}
+                title="Toggle Camera"
+              >
+                <Camera size={18} />
+              </button>
+              <button
+                onClick={() => setVideoOpen(v => !v)}
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
+                  videoOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )}
+                title="Toggle Video Panel"
+              >
+                <MonitorUp size={18} />
+              </button>
+              <button
+                onClick={() => {
+                  alert("Leaving the call");
+                  window.location.href = "/dashboard";
+                }}
+                className="w-12 h-10 rounded-[20px] flex items-center justify-center transition-colors bg-red-500 text-white hover:bg-red-600 shadow-sm ml-2"
+                title="Leave Call"
+              >
+                <PhoneOff size={18} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => alert("Trainer has been notified that your hand is raised.")}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200"
+                title="Raise Hand"
+              >
+                <Hand size={18} />
+              </button>
+              <button
+                onClick={() => setChatOpen(v => !v)}
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-colors relative shadow-sm",
+                  chatOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )}
+                title="Toggle Chat"
+              >
+                <MessageSquare size={18} />
+                {chatUnread > 0 && !chatOpen && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
+                    {chatUnread > 9 ? "9+" : chatUnread}
+                  </span>
+                )}
+              </button>
+            </>
+          )}
+        </div>
+
+        <div className="w-1/3 min-w-0 flex items-center justify-end gap-3">
+          {training.type !== "in_person" && (
+            <button
+              onClick={() => setChatOpen(v => !v)}
+              className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center transition-colors relative",
+                chatOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-white text-gray-500 hover:bg-gray-100"
+              )}
+              title="Toggle Chat"
+            >
+              <MessageSquare size={18} />
+              {chatUnread > 0 && !chatOpen && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
+                  {chatUnread > 9 ? "9+" : chatUnread}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* FAB Scratchpad */}

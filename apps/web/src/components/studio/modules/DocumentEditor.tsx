@@ -13,7 +13,7 @@ export function DocumentEditor({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-        <div className="p-2 bg-brand-50 text-brand-600 rounded-lg">
+        <div className="p-2 bg-[#e8f0fe] text-[#1a73e8] rounded-lg">
           <FileText size={20} />
         </div>
         <div>

@@ -12,7 +12,7 @@ export function ReflectionEditor({ module, config, onChange }: { module: Trainin
             value={config.prompt ?? ""}
             onChange={(e) => onChange({ ...config, prompt: e.target.value })}
             rows={4}
-            className="w-full px-4 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors resize-none"
+            className="w-full px-4 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors resize-none"
             placeholder="What would you like participants to reflect on?"
           />
         </div>
@@ -24,7 +24,7 @@ export function ReflectionEditor({ module, config, onChange }: { module: Trainin
             max={5000}
             value={config.maxLength ?? 500}
             onChange={(e) => onChange({ ...config, maxLength: Number(e.target.value) })}
-            className="w-28 px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+            className="w-28 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
           />
         </div>
       </div>

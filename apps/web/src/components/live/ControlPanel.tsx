@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useModules, useUnlockModule } from "@/hooks/useModules";
@@ -10,6 +11,8 @@ import { RoleGate } from "@/components/shared/RoleGate";
 import type { Training, TrainingRole } from "@oruclass/types";
 import { cn } from "@oruclass/utils";
 import { Play, Pause, Square, RotateCcw, Lock, Unlock, PlayCircle, RefreshCw, Users, AlertCircle } from "lucide-react";
+
+const ACTIVE_STATUSES = ["connecting", "live", "paused"] as const;
 
 interface Props {
   trainingId: string;
@@ -54,11 +57,21 @@ export function ControlPanel({ trainingId, workspaceId, training, userTrainingRo
         role={userTrainingRole}
         permission="pause_room"
         fallback={
-          <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
-            <p className="text-[12px] text-gray-400 text-center">
-              You don't have session control permissions.
-            </p>
-          </div>
+          ACTIVE_STATUSES.includes(status as typeof ACTIVE_STATUSES[number]) ? (
+            <Link
+              href={`/trainings/${trainingId}/live`}
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-green-600 text-white text-[13px] font-semibold rounded-xl hover:bg-green-700 active:scale-[.98] transition-all"
+            >
+              <Play size={14} strokeWidth={2.5} />
+              Join Session
+            </Link>
+          ) : (
+            <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+              <p className="text-[12px] text-gray-400 text-center">
+                No active session.
+              </p>
+            </div>
+          )
         }
       >
         <div>

@@ -22,6 +22,7 @@ import { TrainerModuleRenderer } from "../tools/TrainerModuleRenderer";
 import { ModuleStopwatch } from "./ModuleStopwatch";
 import { DraggableVideoDock } from "./DraggableVideoDock";
 import { LiveChatDock } from "./LiveChatDock";
+import { LiveQRDock } from "./LiveQRDock";
 import { cn } from "@oruclass/utils";
 import { canDo } from "@/lib/permissions";
 import {
@@ -37,6 +38,13 @@ import {
   CalendarDays,
   Video,
   MessageSquare,
+  Mic,
+  MicOff,
+  Camera,
+  MonitorUp,
+  QrCode,
+  Hand,
+  PhoneOff,
 } from "lucide-react";
 
 type RightTab = "control" | "agenda" | "participants" | "responses";
@@ -51,6 +59,9 @@ const TABS: { id: RightTab; label: string; Icon: React.ElementType }[] = [
 export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
   const [rightOpen, setRightOpen] = useState(true);
   const [videoOpen, setVideoOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [micMuted, setMicMuted] = useState(false);
+  const [cameraMuted, setCameraMuted] = useState(false);
   const [activeTab, setActiveTab] = useState<RightTab>("control");
   const boundsRef = useRef<HTMLDivElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -82,6 +93,10 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
   const activeModule = useLiveSessionStore((s) => s.activeModule);
   const setActiveModule = useLiveSessionStore((s) => s.setActiveModule);
   const setSessionStats = useLiveSessionStore((s) => s.setSessionStats);
+  const addGrantedPermission = useLiveSessionStore((s) => s.addGrantedPermission);
+  const revokeGrantedPermission = useLiveSessionStore((s) => s.revokeGrantedPermission);
+  const setGrantedPermissions = useLiveSessionStore((s) => s.setGrantedPermissions);
+  const setSessionGrants = useLiveSessionStore((s) => s.setSessionGrants);
   const addParticipant = useLiveSessionStore((s) => s.addParticipant);
   const participants = useLiveSessionStore((s) => s.participants);
   const responseCounts = useLiveSessionStore((s) => s.responseCounts);
@@ -144,17 +159,34 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
     };
     socket.on("trainer:attention_alert", handleAttentionAlert);
 
+    const handlePermissionGranted = (data: { permission: "unlock_modules" | "pause_room"; grantedBy: string }) => {
+      addGrantedPermission(data.permission);
+    };
+    const handlePermissionRevoked = (data: { permission: "unlock_modules" | "pause_room" }) => {
+      revokeGrantedPermission(data.permission);
+    };
+    const handleGrantsSnapshot = (data: { myGrants: ("unlock_modules" | "pause_room")[]; allGrants: Record<string, ("unlock_modules" | "pause_room")[]> }) => {
+      setGrantedPermissions(data.myGrants);
+      setSessionGrants(data.allGrants);
+    };
+    socket.on("session:permission_granted", handlePermissionGranted);
+    socket.on("session:permission_revoked", handlePermissionRevoked);
+    socket.on("session:grants_snapshot", handleGrantsSnapshot);
+
     return () => {
       socket.off("connect", handleConnect);
       socket.off("session:submission_update", handleSubmissionUpdate);
       socket.off("trainer:attention_alert", handleAttentionAlert);
+      socket.off("session:permission_granted", handlePermissionGranted);
+      socket.off("session:permission_revoked", handlePermissionRevoked);
+      socket.off("session:grants_snapshot", handleGrantsSnapshot);
     };
   }, [user, trainingId, socket, training?.sessionStatus, setSessionStats]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!training) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-7 w-7 border-2 border-brand-500 border-t-transparent" />
+        <div className="animate-spin rounded-full h-7 w-7 border-2 border-[#1a73e8] border-t-transparent" />
       </div>
     );
   }
@@ -225,12 +257,12 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
                   disabled={training.sessionStatus !== "draft"}
                   title={training.sessionStatus === "draft" ? "Change day" : `Running Day ${selectedDay.dayNumber}`}
                   className={cn(
-                    "flex items-center gap-1.5 shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
-                    "bg-brand-50 border-brand-200 text-brand-700",
-                    training.sessionStatus === "draft" ? "hover:bg-brand-100 transition-colors" : "cursor-default",
+                    "flex items-center gap-1.5 shrink-0 rounded border px-2.5 py-1 text-[11px] font-semibold",
+                    "bg-gray-50 border-gray-200 text-gray-700",
+                    training.sessionStatus === "draft" ? "hover:bg-gray-100 transition-colors" : "cursor-default",
                   )}
                 >
-                  <CalendarDays size={12} />
+                  <CalendarDays size={12} className="text-gray-500" />
                   <span className="truncate max-w-[120px]">Day {selectedDay.dayNumber} · {selectedDay.title}</span>
                   {training.sessionStatus === "draft" && <X size={11} className="opacity-60" />}
                 </button>
@@ -238,7 +270,7 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
               {activeModule && (
                 <>
                   <ChevronRight size={13} className="text-gray-300 shrink-0" />
-                  <span className="text-sm text-brand-600 font-medium truncate hidden sm:inline">
+                  <span className="text-sm text-[#1a73e8] font-medium truncate hidden sm:inline">
                     {activeModule.title}
                   </span>
                 </>
@@ -253,27 +285,6 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
 
           {/* Right: status + participant count + toggle */}
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => { setVideoOpen((v) => !v); }}
-              className={cn("p-1.5 rounded-md transition-all duration-200", videoOpen ? "bg-brand-500 text-white shadow-sm shadow-brand-500/20" : "text-gray-500 hover:bg-gray-100")}
-              title="Toggle Video Conference"
-            >
-              <Video size={16} className={cn(videoOpen && "animate-pulse")} />
-            </button>
-
-            <button
-              onClick={() => { setChatOpen((v) => !v); setChatUnread(0); }}
-              className={cn("relative p-1.5 rounded-md transition-all duration-200", chatOpen ? "bg-brand-500 text-white shadow-sm shadow-brand-500/20" : "text-gray-500 hover:bg-gray-100")}
-              title="Toggle Chat"
-            >
-              <MessageSquare size={16} />
-              {chatUnread > 0 && !chatOpen && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
-                  {chatUnread > 9 ? "9+" : chatUnread}
-                </span>
-              )}
-            </button>
-
             {participantCount > 0 && (
               <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-500 font-medium bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1">
                 <Users size={12} />
@@ -351,6 +362,136 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
               onUnreadChange={(updater) => setChatUnread(updater)}
             />
           )}
+          {qrOpen && (
+            <LiveQRDock
+              training={training}
+              boundsRef={boundsRef}
+              onClose={() => setQrOpen(false)}
+            />
+          )}
+        </div>
+
+        {/* BOTTOM NAV (Google Meet Style) */}
+        <div className="h-16 border-t border-gray-100 bg-white flex items-center justify-between px-6 flex-shrink-0 z-20 w-full">
+          <div className="w-1/3 min-w-0 flex items-center justify-start">
+            <span className="text-[14px] text-gray-700 truncate block font-medium">
+              {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull; {training.title}
+            </span>
+          </div>
+
+          <div className="w-1/3 min-w-0 flex items-center justify-center gap-3">
+            {training.type !== "in_person" ? (
+              <>
+                <button
+                  onClick={() => {
+                    setMicMuted(v => !v);
+                    alert(`Microphone ${!micMuted ? "muted" : "unmuted"}`);
+                  }}
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
+                    micMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                  title="Toggle Microphone"
+                >
+                  {micMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                </button>
+                <button
+                  onClick={() => {
+                    setCameraMuted(v => !v);
+                    alert(`Camera ${!cameraMuted ? "turned off" : "turned on"}`);
+                  }}
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
+                    cameraMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                  title="Toggle Camera"
+                >
+                  <Camera size={18} />
+                </button>
+                <button
+                  onClick={() => setVideoOpen(v => !v)}
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
+                    videoOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                  title="Toggle Video Panel"
+                >
+                  <MonitorUp size={18} />
+                </button>
+                <button
+                  onClick={() => {
+                    alert("Leaving the call");
+                    router.push(`/dashboard`);
+                  }}
+                  className="w-12 h-10 rounded-[20px] flex items-center justify-center transition-colors bg-red-500 text-white hover:bg-red-600 shadow-sm ml-2"
+                  title="Leave Call"
+                >
+                  <PhoneOff size={18} />
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setQrOpen(v => !v)}
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
+                    qrOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                  title="Show Join QR Code"
+                >
+                  <QrCode size={18} />
+                </button>
+                <button
+                  onClick={() => {
+                    const nextState = !useLiveSessionStore.getState().isPaused;
+                    socket?.emit(nextState ? "trainer:pause_room" : "trainer:unpause_room", { trainingId });
+                  }}
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
+                    useLiveSessionStore.getState().isPaused ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                  title={useLiveSessionStore.getState().isPaused ? "Unpause Room" : "Pause Room"}
+                >
+                  <Hand size={18} />
+                </button>
+                <button
+                  onClick={() => setChatOpen(v => !v)}
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors relative shadow-sm",
+                    chatOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                  title="Toggle Chat"
+                >
+                  <MessageSquare size={18} />
+                  {chatUnread > 0 && !chatOpen && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
+                      {chatUnread > 9 ? "9+" : chatUnread}
+                    </span>
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="w-1/3 min-w-0 flex items-center justify-end gap-3">
+            {training.type !== "in_person" && (
+              <button
+                onClick={() => setChatOpen(v => !v)}
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-colors relative",
+                  chatOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-white text-gray-500 hover:bg-gray-100"
+                )}
+                title="Toggle Chat"
+              >
+                <MessageSquare size={18} />
+                {chatUnread > 0 && !chatOpen && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
+                    {chatUnread > 9 ? "9+" : chatUnread}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -389,11 +530,11 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
               className={cn(
                 "flex-1 flex flex-col items-center gap-1 py-3 text-[11px] font-semibold transition-colors",
                 activeTab === id
-                  ? "text-brand-600 border-b-2 border-brand-500"
-                  : "text-gray-400 hover:text-gray-700 border-b-2 border-transparent",
+                  ? "text-[#1a73e8] border-b-2 border-[#1a73e8]"
+                  : "text-gray-500 hover:text-gray-700 border-b-2 border-transparent",
               )}
             >
-              <Icon size={15} strokeWidth={activeTab === id ? 2.5 : 2} />
+              <Icon size={16} strokeWidth={activeTab === id ? 2.5 : 2} />
               {label}
             </button>
           ))}

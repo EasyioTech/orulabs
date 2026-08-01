@@ -2,6 +2,7 @@ import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
+import type { ModuleType } from "@oruclass/types";
 import { randomBytes, randomUUID } from "crypto";
 
 const connectionString = process.env.DATABASE_URL;
@@ -71,7 +72,7 @@ async function seedSession() {
 
   console.log(`Created Training Session: ${training.id}`);
 
-  const modulesToCreate = [
+  const modulesToCreate: Array<{ moduleType: ModuleType; title: string; config: Record<string, unknown> }> = [
     { 
       moduleType: "attendance", 
       title: "Ready Player One", 
@@ -224,7 +225,6 @@ async function seedSession() {
       trainingId: training.id,
       dayId: trainingDay.id,
       title: mod.title,
-      // @ts-ignore
       moduleType: mod.moduleType,
       position: i,
       config: mod.config,

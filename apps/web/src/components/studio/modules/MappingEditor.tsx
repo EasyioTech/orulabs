@@ -19,20 +19,20 @@ export function MappingEditor({ module, config, onChange }: { module: TrainingMo
                 ],
               })
             }
-            className="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1"
+            className="text-xs text-[#1a73e8] hover:text-brand-800 font-medium flex items-center gap-1"
           >
             <Plus size={11} /> Add area
           </button>
         </div>
         
         {focusAreas.length === 0 && (
-          <div className="py-5 text-center bg-gray-50 rounded-xl border border-dashed border-gray-100">
+          <div className="py-5 text-center bg-gray-50 rounded border border-dashed border-gray-100">
             <p className="text-xs text-gray-400">No focus areas added.</p>
           </div>
         )}
 
         {focusAreas.map((area: any, i: number) => (
-          <div key={area.id} className="bg-gray-50 rounded-xl border border-gray-100 p-3 space-y-3">
+          <div key={area.id} className="bg-gray-50 rounded border border-gray-100 p-3 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 space-y-1">
                 <label className="text-[10px] font-semibold text-gray-500 uppercase">Focus Area Title</label>
@@ -42,7 +42,7 @@ export function MappingEditor({ module, config, onChange }: { module: TrainingMo
                     const updated = focusAreas.map((x: any, j: number) => (j === i ? { ...x, title: e.target.value } : x));
                     onChange({ ...config, mappingFocusAreas: updated });
                   }}
-                  className="w-full px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+                  className="w-full px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                   placeholder="e.g. Strengths, Weaknesses"
                 />
               </div>
@@ -65,7 +65,7 @@ export function MappingEditor({ module, config, onChange }: { module: TrainingMo
                   const updated = focusAreas.map((x: any, j: number) => (j === i ? { ...x, numFields: Number(e.target.value) } : x));
                   onChange({ ...config, mappingFocusAreas: updated });
                 }}
-                className="w-16 px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-16 px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#1a73e8]"
               />
             </div>
           </div>

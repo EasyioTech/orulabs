@@ -6,6 +6,9 @@ export type TrainingRole =
   | "full_editor"
   | "partial_editor"
   | "facilitation_support";
+
+// Subset of permissions that can be granted to another facilitator mid-session
+export type GrantablePermission = "unlock_modules" | "pause_room";
 export type ConnectionStatus = "online" | "offline";
 
 export interface Training {

@@ -11,6 +11,7 @@ export function useSocketSession(trainingId: string | null) {
   const initialized = useRef(false);
   const setActiveModule = useLiveSessionStore((s) => s.setActiveModule);
   const addParticipant = useLiveSessionStore((s) => s.addParticipant);
+  const batchAddParticipants = useLiveSessionStore((s) => s.batchAddParticipants);
   const removeParticipant = useLiveSessionStore((s) => s.removeParticipant);
   const setPaused = useLiveSessionStore((s) => s.setPaused);
   const reset = useLiveSessionStore((s) => s.reset);
@@ -74,6 +75,16 @@ export function useSocketSession(trainingId: string | null) {
       invalidateAll();
       qc.invalidateQueries({ queryKey: ["modules"] });
       // No sound on module change — only session lifecycle events trigger audio
+    });
+
+    socket.on("roster:snapshot", ({ participants }) => {
+      batchAddParticipants(participants.map((p) => ({
+        userId: p.userId,
+        name: p.name,
+        role: p.role,
+        joinedAt: p.joinedAt,
+        connectionStatus: p.connectionStatus || "online",
+      })));
     });
 
     socket.on("participant:joined", (p) => {
@@ -156,6 +167,7 @@ export function useSocketSession(trainingId: string | null) {
       socket.io?.off?.("reconnect_attempt");
 
       socket.off("module:unlocked");
+      socket.off("roster:snapshot");
       socket.off("participant:joined");
       socket.off("participant:left");
       socket.off("data:aggregate");
@@ -169,7 +181,7 @@ export function useSocketSession(trainingId: string | null) {
       reset();
       initialized.current = false;
     };
-  }, [trainingId, setActiveModule, addParticipant, removeParticipant, setPaused, reset, setResponseCount, setSocketStatus, qc]);
+  }, [trainingId, setActiveModule, addParticipant, batchAddParticipants, removeParticipant, setPaused, reset, setResponseCount, setSocketStatus, qc]);
 
   return getSocket();
 }

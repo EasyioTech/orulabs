@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/shared/Sidebar";
 import { Header } from "@/components/shared/Header";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { ActiveSessionManager } from "@/components/dashboard/ActiveSessionManager";
+import { AiAvatar } from "@/components/ai-integration/AiAvatar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <ActiveSessionManager />
           </div>
         </div>
+        <AiAvatar />
       </div>
     </AuthGuard>
   );

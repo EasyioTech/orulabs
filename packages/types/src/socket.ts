@@ -1,4 +1,4 @@
-import type { TrainingModule, StickyNote, StrokeData, ConnectionStatus, TrainingRole } from "./training";
+import type { TrainingModule, StickyNote, StrokeData, ConnectionStatus, TrainingRole, GrantablePermission } from "./training";
 
 // Client → Server events
 export interface ClientToServerEvents {
@@ -20,12 +20,15 @@ export interface ClientToServerEvents {
   "chat:send": (data: { trainingId: string; text: string }) => void;
   "participant:focus_lost": (data: { trainingId: string }) => void;
   "participant:focus_restored": (data: { trainingId: string }) => void;
+  "session:grant_permission": (data: { trainingId: string; targetUserId: string; permission: GrantablePermission }, ack?: (result: { ok: boolean; error?: string }) => void) => void;
+  "session:revoke_permission": (data: { trainingId: string; targetUserId: string; permission: GrantablePermission }, ack?: (result: { ok: boolean; error?: string }) => void) => void;
 }
 
 // Server → Client events
 export interface ServerToClientEvents {
   "module:unlocked": (data: { moduleId: string | null; module: TrainingModule | null }) => void;
   "participant:joined": (data: { userId: string; name: string; role: string; trainingRole?: TrainingRole | null; joinedAt: string; connectionStatus: ConnectionStatus }) => void;
+  "roster:snapshot": (data: { participants: Array<{ userId: string; name: string; role: "trainer" | "participant"; trainingRole?: TrainingRole | null; joinedAt: string; connectionStatus: ConnectionStatus }> }) => void;
   "participant:left": (data: { userId: string }) => void;
   "data:aggregate": (data: { trainingId: string; moduleId: string; responseCount: number }) => void;
   "session:submission_update": (data: { trainingId: string; moduleId: string; liveSessionId: string; submitted: number; totalParticipants: number }) => void;
@@ -43,6 +46,9 @@ export interface ServerToClientEvents {
   "session:reset": () => void;
   "chat:message": (data: { id: string; userId: string; senderName: string; text: string; sentAt: string }) => void;
   "trainer:attention_alert": (data: { userId: string; userName: string; isFocused: boolean }) => void;
+  "session:permission_granted": (data: { permission: GrantablePermission; grantedBy: string }) => void;
+  "session:permission_revoked": (data: { permission: GrantablePermission }) => void;
+  "session:grants_snapshot": (data: { myGrants: GrantablePermission[]; allGrants: Record<string, GrantablePermission[]> }) => void;
   error: (data: { code: string; message: string }) => void;
 }
 

@@ -10,7 +10,7 @@ export function CodeEditor({ module, config, onChange }: { module: TrainingModul
           value={config.codePrompt ?? ""}
           onChange={(e) => onChange({ ...config, codePrompt: e.target.value })}
           rows={3}
-          className="w-full px-4 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors resize-none"
+          className="w-full px-4 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors resize-none"
           placeholder="Describe the coding challenge..."
         />
       </div>
@@ -19,7 +19,7 @@ export function CodeEditor({ module, config, onChange }: { module: TrainingModul
         <select
           value={config.codeLanguage ?? "javascript"}
           onChange={(e) => onChange({ ...config, codeLanguage: e.target.value })}
-          className="w-48 px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+          className="w-48 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
         >
           <option value="javascript">JavaScript / Node</option>
           <option value="typescript">TypeScript</option>
@@ -34,7 +34,7 @@ export function CodeEditor({ module, config, onChange }: { module: TrainingModul
           value={config.initialCode ?? ""}
           onChange={(e) => onChange({ ...config, initialCode: e.target.value })}
           rows={6}
-          className="w-full px-4 py-2 font-mono bg-slate-900 text-slate-100 rounded-xl text-xs outline-none transition-colors resize-none shadow-inner"
+          className="w-full px-4 py-2 font-mono bg-slate-900 text-slate-100 rounded text-xs outline-none transition-colors resize-none shadow-inner"
           placeholder="// function solve() { ... }"
         />
       </div>

@@ -297,9 +297,16 @@ function SortableModuleCard({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
+      onClick={(e) => {
+        if (canEdit && !expanded && !isDragging) {
+          e.stopPropagation();
+          setExpanded(true);
+        }
+      }}
       className={cn(
-        "bg-white rounded-lg border border-[#dadce0] overflow-hidden transition-shadow",
-        isDragging ? "shadow-lg opacity-80 rotate-1" : "shadow-sm hover:shadow-md",
+        "bg-white rounded-lg overflow-hidden transition-all",
+        canEdit && !expanded ? "cursor-pointer hover:shadow-sm" : "",
+        isDragging ? "shadow-lg opacity-90 scale-[1.01] border border-[#dadce0]" : expanded ? "shadow-md border-y border-r border-[#dadce0] border-l-4 border-l-[#1a73e8] my-4" : "border border-[#dadce0]",
       )}
     >
       <div className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3">
@@ -313,7 +320,7 @@ function SortableModuleCard({
           </div>
         )}
 
-        <div className={cn("w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0", def.bg)}>
+        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", def.bg)}>
           <Icon size={17} className={def.color} />
         </div>
 
@@ -385,21 +392,21 @@ function SortableModuleCard({
               <DropdownMenu.Content
                 align="end"
                 sideOffset={5}
-                className="z-50 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+                className="z-50 w-48 bg-white rounded shadow-sm border border-gray-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
               >
                 <DropdownMenu.Sub>
-                  <DropdownMenu.SubTrigger className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-600 cursor-pointer outline-none transition-colors">
+                  <DropdownMenu.SubTrigger className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#1a73e8] cursor-pointer outline-none transition-colors">
                     <div className="flex items-center gap-2">
                       <MoveRight size={15} className="text-gray-400" />
                       Move to day
                     </div>
                   </DropdownMenu.SubTrigger>
                   <DropdownMenu.Portal>
-                    <DropdownMenu.SubContent sideOffset={2} alignOffset={-5} className="z-50 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <DropdownMenu.SubContent sideOffset={2} alignOffset={-5} className="z-50 w-48 bg-white rounded shadow-sm border border-gray-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                       <DropdownMenu.Item
                         onClick={() => assignToDay.mutate({ moduleId: module.id, dayId: null })}
                         disabled={assignToDay.isPending || module.dayId == null}
-                        className={cn("px-3 py-2 text-sm cursor-pointer outline-none transition-colors truncate", module.dayId == null ? "bg-brand-50 text-brand-700 font-medium" : "text-gray-700 hover:bg-gray-50 hover:text-brand-600", assignToDay.isPending || module.dayId == null ? "opacity-50 cursor-not-allowed" : "")}
+                        className={cn("px-3 py-2 text-sm cursor-pointer outline-none transition-colors truncate", module.dayId == null ? "bg-[#e8f0fe] text-[#1557b0] font-medium" : "text-gray-700 hover:bg-gray-50 hover:text-[#1a73e8]", assignToDay.isPending || module.dayId == null ? "opacity-50 cursor-not-allowed" : "")}
                       >
                         Unassigned
                       </DropdownMenu.Item>
@@ -408,7 +415,7 @@ function SortableModuleCard({
                           key={d.id}
                           onClick={() => assignToDay.mutate({ moduleId: module.id, dayId: d.id })}
                           disabled={assignToDay.isPending || module.dayId === d.id}
-                          className={cn("px-3 py-2 text-sm cursor-pointer outline-none transition-colors truncate", module.dayId === d.id ? "bg-brand-50 text-brand-700 font-medium" : "text-gray-700 hover:bg-gray-50 hover:text-brand-600", assignToDay.isPending || module.dayId === d.id ? "opacity-50 cursor-not-allowed" : "")}
+                          className={cn("px-3 py-2 text-sm cursor-pointer outline-none transition-colors truncate", module.dayId === d.id ? "bg-[#e8f0fe] text-[#1557b0] font-medium" : "text-gray-700 hover:bg-gray-50 hover:text-[#1a73e8]", assignToDay.isPending || module.dayId === d.id ? "opacity-50 cursor-not-allowed" : "")}
                         >
                           Day {d.dayNumber} · {d.title}
                         </DropdownMenu.Item>
@@ -421,14 +428,14 @@ function SortableModuleCard({
                 </DropdownMenu.Sub>
 
                 <DropdownMenu.Sub>
-                  <DropdownMenu.SubTrigger className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-600 cursor-pointer outline-none transition-colors">
+                  <DropdownMenu.SubTrigger className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#1a73e8] cursor-pointer outline-none transition-colors">
                     <div className="flex items-center gap-2">
                       <Copy size={15} className="text-gray-400" />
                       Copy module
                     </div>
                   </DropdownMenu.SubTrigger>
                   <DropdownMenu.Portal>
-                    <DropdownMenu.SubContent sideOffset={2} alignOffset={-5} className="z-50 w-56 bg-white rounded-xl shadow-lg border border-gray-100 p-2 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <DropdownMenu.SubContent sideOffset={2} alignOffset={-5} className="z-50 w-56 bg-white rounded shadow-sm border border-gray-100 p-2 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <label className="text-xs font-medium text-gray-700">Target training</label>
@@ -436,7 +443,7 @@ function SortableModuleCard({
                             value={copyTargetTrainingId}
                             onChange={(e) => { setCopyTargetTrainingId(e.target.value); setCopyTargetDayId(""); }}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full text-xs border border-gray-100 rounded-md px-2 py-1.5 bg-white focus:ring-1 focus:ring-brand-500 outline-none"
+                            className="w-full text-xs border border-gray-100 rounded-md px-2 py-1.5 bg-white focus:ring-1 focus:ring-[#1a73e8] outline-none"
                           >
                             {trainingsList.map((t) => (
                               <option key={t.id} value={t.id}>
@@ -451,7 +458,7 @@ function SortableModuleCard({
                             value={copyTargetDayId}
                             onChange={(e) => setCopyTargetDayId(e.target.value)}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full text-xs border border-gray-100 rounded-md px-2 py-1.5 bg-white focus:ring-1 focus:ring-brand-500 outline-none"
+                            className="w-full text-xs border border-gray-100 rounded-md px-2 py-1.5 bg-white focus:ring-1 focus:ring-[#1a73e8] outline-none"
                           >
                             <option value="">Unassigned</option>
                             {daysList.map((d) => (
@@ -471,7 +478,7 @@ function SortableModuleCard({
                             });
                           }}
                           disabled={duplicateModule.isPending}
-                          className="w-full text-xs bg-brand-600 text-white font-medium py-1.5 rounded-md hover:bg-brand-700 transition-colors disabled:opacity-50"
+                          className="w-full text-xs bg-[#1a73e8] text-white font-medium py-1.5 rounded-md hover:bg-[#1557b0] transition-colors disabled:opacity-50"
                         >
                           {duplicateModule.isPending ? "Copying..." : "Confirm copy"}
                         </button>
@@ -480,25 +487,7 @@ function SortableModuleCard({
                   </DropdownMenu.Portal>
                 </DropdownMenu.Sub>
 
-                <DropdownMenu.Item
-                  onClick={() => { setExpanded((v) => !v); setMoveOpen(false); setCopyOpen(false); }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-600 cursor-pointer outline-none transition-colors"
-                >
-                  {expanded ? <ChevronUp size={15} className="text-gray-400" /> : <ChevronDown size={15} className="text-gray-400" />}
-                  {expanded ? "Close config" : "Configure module"}
-                </DropdownMenu.Item>
 
-                <DropdownMenu.Separator className="h-[1px] bg-gray-100 my-1" />
-
-                <DropdownMenu.Item
-                  onClick={() => {
-                    if (confirm(`Delete "${module.title}"?`)) deleteModule.mutate();
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer outline-none transition-colors"
-                >
-                  <Trash2 size={15} className="text-red-500 opacity-70" />
-                  Delete module
-                </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
@@ -508,15 +497,42 @@ function SortableModuleCard({
 
 
       {expanded && (
-        <div className="border-t border-gray-100 px-4 pb-4">
+        <div className="border-t border-[#dadce0] px-4 pb-4">
           <ModuleConfigEditor module={module} config={localConfig} onChange={setLocalConfig} />
-          <button
-            onClick={saveConfig}
-            disabled={updateModule.isPending}
-            className="mt-4 w-full py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 disabled:opacity-60 transition-colors"
-          >
-            {updateModule.isPending ? "Saving…" : "Save changes"}
-          </button>
+          {canEdit && (
+            <div className="flex items-center justify-end gap-4 mt-6 pt-4 border-t border-[#dadce0]">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`Delete "${module.title}"?`)) deleteModule.mutate();
+                }}
+                className="p-2 text-gray-500 hover:bg-gray-100 hover:text-red-600 rounded-full transition-colors"
+                title="Delete module"
+              >
+                <Trash2 size={20} />
+              </button>
+              <div className="w-[1px] h-6 bg-[#dadce0]" />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpanded(false);
+                }}
+                className="px-4 py-2 text-[#1a73e8] hover:bg-blue-50/50 rounded-md text-sm font-medium transition-colors"
+              >
+                Done
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  saveConfig();
+                }}
+                disabled={updateModule.isPending}
+                className="px-6 py-2 bg-[#1a73e8] text-white rounded-md text-sm font-medium hover:bg-[#1557b0] shadow-sm disabled:opacity-60 transition-colors"
+              >
+                {updateModule.isPending ? "Saving…" : "Save"}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -571,7 +587,7 @@ function AddModuleDrawer({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-4xl rounded-t-xl sm:rounded-2xl border-t sm:border border-gray-100 shadow-xl max-h-[88vh] sm:max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
+        className="bg-white w-full sm:max-w-4xl rounded-t-xl sm:rounded-lg border-t sm:border border-gray-100 shadow-sm max-h-[88vh] sm:max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
       >
         <div className="flex items-center justify-between px-5 sm:px-6 pt-5 pb-4 border-b border-gray-100">
           <div>
@@ -600,7 +616,7 @@ function AddModuleDrawer({
                   }}
                   disabled={addModule.isPending}
                   className={cn(
-                    "flex flex-col items-start text-left p-5 rounded-2xl border border-gray-100 transition-all h-full",
+                    "flex flex-col items-start text-left p-5 rounded-lg border border-gray-100 transition-all h-full",
                     selected ? "border-[#1a73e8] bg-blue-50/30" : "bg-white hover:border-[#dadce0] hover:shadow-sm",
                     addModule.isPending && !selected && "opacity-50 cursor-not-allowed",
                   )}
@@ -621,7 +637,7 @@ function AddModuleDrawer({
         <div className="px-5 sm:px-6 py-4 border-t border-gray-100">
           <button
             onClick={onClose}
-            className="w-full py-2.5 border border-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+            className="w-full py-2.5 border border-gray-100 text-gray-700 rounded text-sm font-semibold hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
@@ -668,14 +684,14 @@ function DayTabHeader({
 
   if (editing) {
     return (
-      <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-4 space-y-3">
+      <div className="bg-white rounded border border-[#d2e3fc] shadow-sm p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <CalendarDays size={15} className="text-brand-500 shrink-0" />
+          <CalendarDays size={15} className="text-[#1a73e8] shrink-0" />
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && save()}
-            className="flex-1 px-2.5 py-1.5 border border-gray-100 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="flex-1 px-2.5 py-1.5 border border-gray-100 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#1a73e8]"
             autoFocus
           />
         </div>
@@ -685,7 +701,7 @@ function DayTabHeader({
             type="date"
             value={dateVal}
             onChange={(e) => setDateVal(e.target.value)}
-            className="flex-1 px-2.5 py-1.5 border border-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="flex-1 px-2.5 py-1.5 border border-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a73e8]"
           />
           {dateVal && (
             <button onClick={() => setDateVal("")} className="text-gray-400 hover:text-gray-600">
@@ -697,7 +713,7 @@ function DayTabHeader({
           <select
             value={deliveryMode}
             onChange={(e) => setDeliveryMode(e.target.value as "in_person" | "online" | "hybrid" | "")}
-            className="w-full px-2.5 py-1.5 border border-gray-100 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full px-2.5 py-1.5 border border-gray-100 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1a73e8]"
           >
             <option value="">Select Delivery Mode...</option>
             <option value="in_person">In-Person</option>
@@ -708,14 +724,14 @@ function DayTabHeader({
         <div className="flex gap-2">
           <button
             onClick={() => { setTitle(day.title); setEditing(false); }}
-            className="flex-1 py-1.5 border border-gray-100 text-gray-600 rounded-xl text-xs font-medium hover:bg-gray-50"
+            className="flex-1 py-1.5 border border-gray-100 text-gray-600 rounded text-xs font-medium hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             onClick={save}
             disabled={updateDay.isPending}
-            className="flex-1 py-1.5 bg-brand-600 text-white rounded-xl text-xs font-semibold hover:bg-brand-700 disabled:opacity-60"
+            className="flex-1 py-1.5 bg-[#1a73e8] text-white rounded text-xs font-semibold hover:bg-[#1557b0] disabled:opacity-60"
           >
             {updateDay.isPending ? "Saving…" : "Save"}
           </button>
@@ -725,10 +741,10 @@ function DayTabHeader({
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3">
+    <div className="flex items-center justify-between gap-3 bg-white rounded border border-gray-100 shadow-sm px-4 py-3">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center shrink-0">
-          <CalendarDays size={16} className="text-brand-600" />
+        <div className="w-9 h-9 rounded bg-[#e8f0fe] border border-brand-100 flex items-center justify-center shrink-0">
+          <CalendarDays size={16} className="text-[#1a73e8]" />
         </div>
         <div className="min-w-0">
           <p className="text-sm font-bold text-gray-900 truncate">{day.title}</p>
@@ -753,7 +769,7 @@ function DayTabHeader({
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => setEditing(true)}
-            className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+            className="p-1.5 text-gray-400 hover:text-[#1a73e8] hover:bg-[#e8f0fe] rounded-lg transition-colors"
             title="Edit day"
           >
             <Pencil size={13} />
@@ -833,21 +849,21 @@ function DayModuleList({
 
       {modules.length === 0 && !adding && canEdit && (
         <div
-          className="flex flex-col items-center justify-center py-12 bg-[#f8f9fa] rounded-lg border-2 border-dashed border-[#dadce0] cursor-pointer hover:border-[#1a73e8] hover:bg-[#f1f3f4] transition-all group"
+          className="flex flex-col items-center justify-center py-12 bg-white rounded-lg border border-[#dadce0] cursor-pointer hover:border-[#1a73e8] hover:bg-[#f1f3f4] transition-all group"
           onClick={() => setAdding(true)}
         >
-          <div className="w-10 h-10 rounded-xl bg-brand-100 group-hover:bg-brand-200 flex items-center justify-center mb-2.5 transition-colors">
-            <Plus size={18} className="text-brand-600 group-hover:text-brand-700 transition-colors" />
+          <div className="w-10 h-10 rounded bg-[#d2e3fc] group-hover:bg-brand-200 flex items-center justify-center mb-2.5 transition-colors">
+            <Plus size={18} className="text-[#1a73e8] group-hover:text-[#1557b0] transition-colors" />
           </div>
-          <p className="text-sm font-semibold text-brand-700">
+          <p className="text-sm font-semibold text-[#1557b0]">
             Add first module for this day
           </p>
-          <p className="text-xs text-brand-500/80 mt-1">Quiz, whiteboard, reflection, matrix, or sticky notes</p>
+          <p className="text-xs text-[#1a73e8]/80 mt-1">Quiz, whiteboard, reflection, matrix, or sticky notes</p>
         </div>
       )}
 
       {modules.length === 0 && !canEdit && (
-        <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-xl border border-gray-100">
+        <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg border border-[#dadce0]">
           <p className="text-sm font-medium text-gray-400">No modules for this day</p>
         </div>
       )}
@@ -906,7 +922,7 @@ function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: string; wor
           <Users size={15} className="text-gray-500" />
           <h2 className="text-sm font-bold text-gray-900">Training Team</h2>
           {(facilitators.length + allInvitations.length) > 0 && (
-            <span className="text-[10px] font-semibold bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-[#d2e3fc] text-[#1557b0] px-1.5 py-0.5 rounded-full">
               {facilitators.length + allInvitations.length}
             </span>
           )}
@@ -914,7 +930,7 @@ function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: string; wor
         {canManage && (
           <button
             onClick={() => setShowAssign((v) => !v)}
-            className="flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-800 font-semibold"
+            className="flex items-center gap-1 text-[11px] text-[#1a73e8] hover:text-brand-800 font-semibold"
           >
             <UserPlus size={12} />
             Assign
@@ -933,7 +949,7 @@ function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: string; wor
 
         {facilitators.map((f) => (
           <div key={f.userId} className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-[10px] font-bold text-brand-700 shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[#d2e3fc] flex items-center justify-center text-[10px] font-bold text-[#1557b0] shrink-0">
               {(f.user?.name ?? "?").slice(0, 2).toUpperCase()}
             </div>
             <span className="text-sm text-gray-800 font-medium truncate flex-1 min-w-0">{f.user?.name ?? f.userId}</span>
@@ -942,7 +958,7 @@ function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: string; wor
                 value={f.role}
                 onChange={(e) => assignFacilitator.mutate({ userId: f.userId, role: e.target.value as TrainingRole })}
                 disabled={assignFacilitator.isPending}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium shrink-0 border-none outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer disabled:opacity-50"
+                className="text-[10px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium shrink-0 border-none outline-none focus:ring-1 focus:ring-[#1a73e8] cursor-pointer disabled:opacity-50"
               >
                 {FACILITATOR_ROLES.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
@@ -1006,7 +1022,7 @@ function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: string; wor
                   <button
                     onClick={() => resendInvitation.mutate(inv.id)}
                     disabled={resendInvitation.isPending}
-                    className="text-gray-300 hover:text-brand-500 transition-colors disabled:opacity-50"
+                    className="text-gray-300 hover:text-[#1a73e8] transition-colors disabled:opacity-50"
                     title="Resend invitation"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1049,7 +1065,7 @@ function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: string; wor
                     <select
                       value={selectedUserId}
                       onChange={(e) => setSelectedUserId(e.target.value)}
-                      className="w-full px-4 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
+                      className="w-full px-4 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
                     >
                       <option value="">Select member…</option>
                       {unassigned.map((m) => (
@@ -1061,7 +1077,7 @@ function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: string; wor
                     <select
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value as TrainingRole)}
-                      className="w-full px-4 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
+                      className="w-full px-4 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
                     >
                       {FACILITATOR_ROLES.map((r) => (
                         <option key={r.value} value={r.value}>
@@ -1108,12 +1124,12 @@ function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: string; wor
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="Enter email address"
-                  className="w-full px-4 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
+                  className="w-full px-4 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
                 />
                 <select
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value as TrainingRole)}
-                  className="w-full px-4 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
+                  className="w-full px-4 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
                 >
                   {FACILITATOR_ROLES.map((r) => (
                     <option key={r.value} value={r.value}>
@@ -1212,7 +1228,7 @@ function TrainingInfoPanel({ trainingId, workspaceId }: { trainingId: string; wo
         {!editing && canEdit && (
           <button
             onClick={startEditing}
-            className="flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-800 font-semibold"
+            className="flex items-center gap-1 text-[11px] text-[#1a73e8] hover:text-brand-800 font-semibold"
           >
             <Pencil size={11} />
             Edit
@@ -1272,7 +1288,7 @@ function TrainingInfoPanel({ trainingId, workspaceId }: { trainingId: string; wo
                   type="text"
                   value={venue}
                   onChange={(e) => setVenue(e.target.value)}
-                  className="w-full px-4 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
+                  className="w-full px-4 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
                 />
               </div>
             ) : null}
@@ -1283,7 +1299,7 @@ function TrainingInfoPanel({ trainingId, workspaceId }: { trainingId: string; wo
                   type="url"
                   value={meetingLink}
                   onChange={(e) => setMeetingLink(e.target.value)}
-                  className="w-full px-4 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
+                  className="w-full px-4 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
                 />
               </div>
             ) : null}
@@ -1311,7 +1327,7 @@ function TrainingInfoPanel({ trainingId, workspaceId }: { trainingId: string; wo
             <p className="text-sm font-semibold text-gray-900">{training.title}</p>
             <div className="flex flex-wrap gap-1.5">
               {training.labels?.map((label: string, idx: number) => (
-                <span key={idx} className="text-[10px] font-bold bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full border border-brand-100">
+                <span key={idx} className="text-[10px] font-bold bg-[#e8f0fe] text-[#1557b0] px-2 py-0.5 rounded-full border border-brand-100">
                   {label}
                 </span>
               ))}
@@ -1374,7 +1390,7 @@ function SessionChecklist({ workspaceId, trainingId }: { workspaceId: string; tr
         {!editing && canEdit && (
           <button
             onClick={startEdit}
-            className="flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-800 font-semibold"
+            className="flex items-center gap-1 text-[11px] text-[#1a73e8] hover:text-brand-800 font-semibold"
           >
             <Pencil size={11} />
             Edit
@@ -1392,7 +1408,7 @@ function SessionChecklist({ workspaceId, trainingId }: { workspaceId: string; tr
                   setDraft((prev) => prev.map((p) => (p.id === d.id ? { ...p, label: e.target.value } : p)))
                 }
                 placeholder="Checklist item…"
-                className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+                className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
               />
               <button
                 onClick={() => setDraft((prev) => prev.filter((_, idx) => idx !== i))}
@@ -1407,7 +1423,7 @@ function SessionChecklist({ workspaceId, trainingId }: { workspaceId: string; tr
             onClick={() =>
               setDraft((prev) => [...prev, { id: crypto.randomUUID(), label: "", done: false }])
             }
-            className="flex items-center gap-1.5 text-[11px] font-semibold text-brand-600 hover:text-brand-800"
+            className="flex items-center gap-1.5 text-[11px] font-semibold text-[#1a73e8] hover:text-brand-800"
           >
             <Plus size={13} /> Add item
           </button>
@@ -1521,34 +1537,42 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
   if (!daysLoading && days.length === 0 && unassignedModules.length === 0) {
     return (
       <StudioRoleContext.Provider value={myRole}>
-      <div className="max-w-5xl mx-auto px-1 space-y-6 pb-8">
+      <div className="min-h-screen bg-[#f8f9fa] pt-4"><div className="max-w-[1200px] mx-auto px-4 sm:px-6 space-y-6 pb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Training Studio</h1>
             <p className="text-sm text-gray-500 mt-0.5">Build and configure activities for your live session</p>
           </div>
-          {(!myRole || canDo(myRole, "pause_room")) && (
+          {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? (
             <Link
               href={`/trainings/${trainingId}/live`}
-              className={cn("flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm w-full sm:w-auto shrink-0", ["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? "bg-green-600 hover:bg-green-700 shadow-green-200" : "bg-brand-600 hover:bg-brand-700 shadow-brand-200")}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-semibold transition-colors shadow-sm shadow-green-200 w-full sm:w-auto shrink-0"
             >
-              {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? <Play size={14} /> : <Radio size={14} />}
-              {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? "Join Session" : "Go Live"}
+              <Play size={14} />
+              Join Session
             </Link>
-          )}
+          ) : (!myRole || canDo(myRole, "pause_room")) ? (
+            <Link
+              href={`/trainings/${trainingId}/live`}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded text-sm font-semibold transition-colors shadow-sm shadow-brand-200 w-full sm:w-auto shrink-0"
+            >
+              <Radio size={14} />
+              Go Live
+            </Link>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             {canEditAgenda ? (
               <div
-                className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-100 cursor-pointer hover:border-brand-300 hover:bg-brand-50/20 transition-all group"
+                className="flex flex-col items-center justify-center py-20 bg-white rounded-lg border border-[#dadce0] cursor-pointer hover:border-brand-300 hover:bg-[#e8f0fe]/20 transition-all group"
                 onClick={handleAddDay}
               >
-                <div className="w-14 h-14 rounded-xl bg-brand-50 group-hover:bg-brand-100 border border-brand-100 flex items-center justify-center mb-4 transition-colors">
-                  <CalendarDays size={24} className="text-brand-500" />
+                <div className="w-14 h-14 rounded bg-[#e8f0fe] group-hover:bg-[#d2e3fc] border border-brand-100 flex items-center justify-center mb-4 transition-colors">
+                  <CalendarDays size={24} className="text-[#1a73e8]" />
                 </div>
-                <p className="text-base font-bold text-gray-800 group-hover:text-brand-700 transition-colors">
+                <p className="text-base font-bold text-gray-800 group-hover:text-[#1557b0] transition-colors">
                   Start building your curriculum
                 </p>
                 <p className="text-sm text-gray-400 mt-1 text-center max-w-xs">
@@ -1556,15 +1580,15 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
                 </p>
                 <button
                   disabled={createDay.isPending}
-                  className="mt-5 flex items-center gap-2 px-5 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 disabled:opacity-60 transition-colors shadow-sm shadow-brand-200"
+                  className="mt-5 flex items-center gap-2 px-5 py-2.5 bg-[#1a73e8] text-white rounded text-sm font-semibold hover:bg-[#1557b0] disabled:opacity-60 transition-colors shadow-sm shadow-brand-200"
                 >
                   <Plus size={15} />
                   {createDay.isPending ? "Adding…" : "Add Day 1"}
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-100">
-                <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
+              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg border border-[#dadce0]">
+                <div className="w-14 h-14 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
                   <CalendarDays size={24} className="text-gray-300" />
                 </div>
                 <p className="text-base font-bold text-gray-700">No curriculum yet</p>
@@ -1579,33 +1603,41 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
             <SessionChecklist trainingId={trainingId} workspaceId={workspaceId} />
           </div>
         </div>
-      </div>
+      </div></div>
       </StudioRoleContext.Provider>
     );
   }
 
   return (
     <StudioRoleContext.Provider value={myRole}>
-    <div className="max-w-5xl mx-auto px-1 space-y-5 pb-8">
+    <div className="min-h-screen bg-[#f8f9fa] pt-4"><div className="max-w-[1200px] mx-auto px-4 sm:px-6 space-y-5 pb-8">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Training Studio</h1>
           <p className="text-sm text-gray-500 mt-0.5">Build and configure activities for your live session</p>
         </div>
-        {(!myRole || canDo(myRole, "pause_room")) && (
+        {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? (
           <Link
             href={`/trainings/${trainingId}/live`}
-            className={cn("flex items-center justify-center gap-2 px-6 py-2 text-white rounded-full text-sm font-medium transition-colors shadow-sm w-full sm:w-auto shrink-0", ["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? "bg-green-600 hover:bg-green-700" : "bg-[#1a73e8] hover:bg-[#1557b0]")}
+            className="flex items-center justify-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-full text-sm font-medium transition-colors shadow-sm w-full sm:w-auto shrink-0"
           >
-            {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? <Play size={16} /> : <Radio size={16} />}
-            {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? "Join Session" : "Go Live"}
+            <Play size={16} />
+            Join Session
           </Link>
-        )}
+        ) : (!myRole || canDo(myRole, "pause_room")) ? (
+          <Link
+            href={`/trainings/${trainingId}/live`}
+            className="flex items-center justify-center gap-2 px-6 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-full text-sm font-medium transition-colors shadow-sm w-full sm:w-auto shrink-0"
+          >
+            <Radio size={16} />
+            Go Live
+          </Link>
+        ) : null}
       </div>
 
       {isReadOnly && (
-        <div className="flex items-start gap-2.5 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
+        <div className="flex items-start gap-2.5 bg-gray-50 border border-gray-100 rounded px-4 py-3">
           <Lock size={15} className="text-gray-400 mt-0.5 shrink-0" />
           <div>
             <p className="text-sm font-semibold text-gray-700">Read-only access</p>
@@ -1622,13 +1654,13 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
           type="button"
           onClick={() => scrollTabs(-1)}
           aria-label="Scroll days left"
-          className="shrink-0 p-1.5 rounded-lg border border-gray-100 bg-white text-gray-400 hover:text-brand-600 hover:border-brand-200 transition-colors"
+          className="shrink-0 p-1.5 rounded-lg border border-gray-100 bg-white text-gray-400 hover:text-[#1a73e8] hover:border-[#d2e3fc] transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
       <div
         ref={dayTabsRef}
-        className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none"
+        className="flex items-center gap-2 overflow-x-auto scrollbar-none border-b border-[#dadce0] w-full"
         onWheel={(e) => {
           if (e.deltaY === 0) return;
           e.currentTarget.scrollLeft += e.deltaY;
@@ -1642,10 +1674,10 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
               key={day.id}
               onClick={() => setActiveTab(day.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shrink-0 transition-all border-none",
+                "flex items-center gap-2 px-4 py-3 text-sm font-medium shrink-0 transition-all border-b-2",
                 isActive
-                  ? "bg-[#e8f0fe] text-[#1a73e8]"
-                  : "bg-white text-gray-600 hover:bg-[#f1f3f4]",
+                  ? "border-[#1a73e8] text-[#1a73e8] bg-transparent"
+                  : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 bg-transparent",
               )}
             >
               <CalendarDays size={16} />
@@ -1669,10 +1701,10 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
           <button
             onClick={() => setActiveTab("general")}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shrink-0 transition-all border-none",
+              "flex items-center gap-2 px-4 py-3 text-sm font-medium shrink-0 transition-all border-b-2",
               effectiveTab === "general"
-                ? "bg-amber-100 text-amber-800"
-                : "bg-white text-amber-700 hover:bg-amber-50",
+                ? "border-amber-500 text-amber-700 bg-transparent"
+                : "border-transparent text-gray-600 hover:text-amber-700 hover:bg-amber-50 bg-transparent",
             )}
           >
             <AlertTriangle size={16} />
@@ -1693,7 +1725,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
           <button
             onClick={handleAddDay}
             disabled={createDay.isPending}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium shrink-0 border-none bg-white text-gray-500 hover:bg-[#f1f3f4] hover:text-gray-800 transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-3 text-sm font-medium shrink-0 border-b-2 border-transparent bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
           >
             <Plus size={16} />
             {createDay.isPending ? "Adding…" : "Add Day"}
@@ -1704,7 +1736,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
           type="button"
           onClick={() => scrollTabs(1)}
           aria-label="Scroll days right"
-          className="shrink-0 p-1.5 rounded-lg border border-gray-100 bg-white text-gray-400 hover:text-brand-600 hover:border-brand-200 transition-colors"
+          className="shrink-0 p-1.5 rounded-lg border border-gray-100 bg-white text-gray-400 hover:text-[#1a73e8] hover:border-[#d2e3fc] transition-colors"
         >
           <ChevronRight size={16} />
         </button>
@@ -1715,7 +1747,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
         <div className="lg:col-span-2 space-y-4">
           {effectiveTab === "general" ? (
             <>
-              <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+              <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded px-4 py-3">
                 <AlertTriangle size={15} className="text-amber-500 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm font-semibold text-amber-800">Modules not assigned to a day</p>
@@ -1751,7 +1783,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
           <FacilitatorPanel trainingId={trainingId} workspaceId={workspaceId} />
         </div>
       </div>
-    </div>
+    </div></div>
     </StudioRoleContext.Provider>
   );
 }

@@ -4,7 +4,7 @@ import { useWorkspaceStore } from "@/store/workspace";
 import { useLayoutStore } from "@/store/layout";
 import { useSubscriptionStore } from "@/store/subscription";
 import { useAuth } from "@/hooks/useAuth";
-import { Menu, User, LogOut, Crown, CreditCard, Sparkles, HelpCircle, MessageSquare, Settings, Grid, GraduationCap } from "lucide-react";
+import { Menu, User, LogOut, Crown, CreditCard, Sparkles, HelpCircle, Settings, Grid, Search } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from "next/link";
 import { getPlan } from "@/config/plans";
@@ -26,50 +26,65 @@ export function Header() {
   const isPro = status === "active";
   const currentPlan = planId ? getPlan(planId) : null;
 
-  const [timeString, setTimeString] = useState("");
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      const date = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      setTimeString(`${time} • ${date}`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
-    <header className="h-16 bg-white flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10 w-full">
-      <div className="flex items-center gap-4">
+    <header className="h-16 bg-white flex items-center justify-between px-4 md:px-6 border-b border-gray-300 flex-shrink-0 z-10 w-full font-sans">
+      
+      {/* Left Section: Menu & Logo */}
+      <div className="flex items-center gap-4 min-w-[240px]">
         <button
           onClick={() => {
             toggleMobileSidebar();
             toggleDesktopSidebar();
           }}
-          className="p-2.5 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors outline-none"
+          className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors outline-none flex-shrink-0"
         >
           <Menu size={24} />
         </button>
         <div className="flex items-center gap-2">
-          <Logo size={32} />
-          <span className="text-[22px] font-medium text-gray-600 tracking-tight ml-1">
-            {active?.name ?? "OruLabs"}
+          <Logo size={28} />
+          <span className="text-[22px] font-normal text-gray-700 tracking-tight ml-1">
+            {active?.name ?? "Workspace"}
           </span>
         </div>
       </div>
 
+      {/* Middle Section: Search Bar (Google Drive style) */}
+      <div className="hidden md:flex flex-1 max-w-[720px] mx-8">
+        <div className="flex w-full items-center bg-[#f1f3f4] focus-within:bg-white focus-within:shadow-md focus-within:border-transparent border border-transparent rounded-full px-4 py-2.5 transition-all">
+          <button className="text-gray-600 mr-3 flex-shrink-0">
+            <Search size={20} />
+          </button>
+          <input 
+            type="text" 
+            placeholder="Search in Drive..." 
+            className="w-full bg-transparent border-none outline-none text-base text-gray-700 placeholder-gray-600"
+          />
+        </div>
+      </div>
+
+      {/* Right Section: Tools & Profile */}
       {user && (
-        <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center text-[15px] text-gray-600 font-medium mr-4">
-            {timeString}
-          </div>
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          
+          {/* Pro / Upgrade Badge */}
+          {isPro ? (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-full border border-gray-200">
+              <span className="text-[11px] font-medium text-gray-600 uppercase tracking-widest">{currentPlan?.name || 'PRO'}</span>
+            </div>
+          ) : (
+            <Link
+              href="/subscription"
+              className="hidden sm:flex items-center gap-2 bg-white hover:bg-gray-50 text-[#1a73e8] border border-gray-300 px-4 py-2 rounded transition-colors"
+            >
+              <span className="text-sm font-medium tracking-wide">Upgrade</span>
+            </Link>
+          )}
 
           <div className="hidden sm:flex items-center gap-1 mr-2">
+            {/* Help Dropdown */}
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors outline-none">
+                <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors outline-none" title="Support">
                   <HelpCircle size={22} strokeWidth={1.5} />
                 </button>
               </DropdownMenu.Trigger>
@@ -77,30 +92,26 @@ export function Header() {
                 <DropdownMenu.Content
                   align="end"
                   sideOffset={8}
-                  className="z-50 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+                  className="z-50 w-48 bg-white rounded shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)] py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
                 >
                   <DropdownMenu.Item asChild>
-                    <Link href="#" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 cursor-pointer outline-none transition-colors">
+                    <Link href="#" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer outline-none transition-colors">
                       Help Center
                     </Link>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item asChild>
-                    <Link href="#" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 cursor-pointer outline-none transition-colors">
+                    <Link href="#" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer outline-none transition-colors">
                       Terms of Service
-                    </Link>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item asChild>
-                    <Link href="#" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 cursor-pointer outline-none transition-colors">
-                      Privacy Policy
                     </Link>
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
 
+            {/* Settings Dropdown */}
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors outline-none">
+                <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors outline-none" title="Settings">
                   <Settings size={22} strokeWidth={1.5} />
                 </button>
               </DropdownMenu.Trigger>
@@ -108,48 +119,34 @@ export function Header() {
                 <DropdownMenu.Content
                   align="end"
                   sideOffset={8}
-                  className="z-50 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+                  className="z-50 w-48 bg-white rounded shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)] py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
                 >
                   <DropdownMenu.Item asChild>
-                    <Link href="/workspaces" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 cursor-pointer outline-none transition-colors">
-                      Workspace Settings
+                    <Link href={activeId ? `/workspaces/${activeId}/settings` : "/workspaces"} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer outline-none transition-colors">
+                      Settings
                     </Link>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item asChild>
-                    <Link href="/subscription" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 cursor-pointer outline-none transition-colors">
+                    <Link href="/subscription" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer outline-none transition-colors">
                       Billing & Plans
                     </Link>
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
+
+            {/* Google Apps Icon (Grid) */}
+            <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors outline-none" title="OruLabs Apps">
+              <Grid size={22} strokeWidth={1.5} />
+            </button>
           </div>
 
-          {/* Subscription CTA / PRO Badge */}
-          {isPro ? (
-            <div className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 px-2.5 py-1 rounded-full mr-2">
-              <Crown size={12} className="text-amber-500" strokeWidth={2.5} />
-              <span className="text-[11px] font-700 text-amber-700 tracking-wide">PRO</span>
-            </div>
-          ) : (
-            <Link
-              href="/subscription"
-              className="hidden sm:flex items-center gap-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white px-4 py-2 rounded-full mr-2 transition-colors shadow-sm"
-            >
-              <Sparkles size={16} className="text-white" strokeWidth={2} />
-              <span className="text-[13px] font-medium tracking-wide">Upgrade Plan</span>
-            </Link>
-          )}
-
+          {/* User Profile */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
-                className={cn(
-                  "outline-none flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0",
-                  isPro
-                    ? "bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-300/50 hover:ring-amber-400/70"
-                    : "bg-brand-100 hover:ring-2 hover:ring-brand-500/20"
-                )}
+                className="outline-none flex items-center justify-center w-8 h-8 rounded-full transition-all flex-shrink-0 bg-[#e37400] text-white hover:ring-4 hover:ring-gray-100"
+                title={`Google Account\n${user.name}\n${user.email}`}
               >
                 {user.avatarUrl ? (
                   <img
@@ -158,12 +155,7 @@ export function Header() {
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <span
-                    className={cn(
-                      "text-[12px] font-bold select-none",
-                      isPro ? "text-amber-700" : "text-brand-600"
-                    )}
-                  >
+                  <span className="text-sm font-medium select-none">
                     {user.name?.[0]?.toUpperCase()}
                   </span>
                 )}
@@ -174,64 +166,47 @@ export function Header() {
               <DropdownMenu.Content
                 align="end"
                 sideOffset={8}
-                className="z-50 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+                className="z-50 w-[354px] bg-white rounded-[24px] shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)] overflow-hidden animate-in fade-in zoom-in-95 duration-100 p-2"
               >
-                {/* User info + plan badge */}
-                <div className="px-3 py-2.5 border-b border-gray-100 mb-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {user.name}
-                    </p>
-                    {isPro && currentPlan && (
-                      <span className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-orange-400 text-white text-[10px] font-700 px-2 py-0.5 rounded-full shadow-sm">
-                        <Sparkles size={9} />
-                        {currentPlan.name.toUpperCase()}
-                      </span>
+                {/* User info (Google style large card) */}
+                <div className="flex flex-col items-center pt-4 pb-2 px-4">
+                  <div className="text-sm text-gray-900 font-medium mb-1">{user.email}</div>
+                  
+                  <div className="w-16 h-16 rounded-full bg-[#e37400] text-white flex items-center justify-center text-3xl font-normal mt-3 mb-2">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      user.name?.[0]?.toUpperCase()
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 truncate mt-0.5">
-                    {user.email}
-                  </p>
-                  {!isPro && (
-                    <Link
-                      href="/subscription"
-                      className="mt-2 flex items-center gap-1.5 text-[11.5px] font-600 text-brand-600 hover:text-brand-700 transition-colors"
-                    >
-                      <Crown size={12} />
-                      Upgrade to Pro
-                    </Link>
-                  )}
-                </div>
+                  
+                  <div className="text-xl font-normal text-gray-900 mb-4 text-center">
+                    Hi, {user.name?.split(' ')[0]}!
+                  </div>
 
-                <DropdownMenu.Item asChild>
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 cursor-pointer outline-none transition-colors"
+                    className="px-6 py-2 border border-gray-300 rounded-full text-sm font-medium text-[#1a73e8] hover:bg-gray-50 transition-colors"
                   >
-                    <User size={15} className="text-gray-400" />
-                    My Profile
+                    Manage your Account
                   </Link>
-                </DropdownMenu.Item>
+                </div>
+                
+                <div className="h-[1px] bg-gray-200 w-full my-2" />
 
-                <DropdownMenu.Item asChild>
-                  <Link
-                    href={isPro ? "/subscription/billing" : "/subscription"}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 cursor-pointer outline-none transition-colors"
+                <div className="px-2">
+                  <DropdownMenu.Item
+                    onClick={signOut}
+                    className="flex w-full items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 cursor-pointer outline-none transition-colors rounded-l-full rounded-r-full"
                   >
-                    <CreditCard size={15} className="text-gray-400" />
-                    {isPro ? "Manage Plan" : "View Plans"}
-                  </Link>
-                </DropdownMenu.Item>
-
-                <DropdownMenu.Separator className="h-[1px] bg-gray-100 my-1" />
-
-                <DropdownMenu.Item
-                  onClick={signOut}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer outline-none transition-colors"
-                >
-                  <LogOut size={15} />
-                  Sign Out
-                </DropdownMenu.Item>
+                    <LogOut size={16} />
+                    Sign out
+                  </DropdownMenu.Item>
+                </div>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { TrainingModule } from "@oruclass/types";
+import type { TrainingModule, GrantablePermission } from "@oruclass/types";
 
 interface LiveParticipantEntry {
   userId: string;
@@ -23,12 +23,22 @@ interface LiveSessionState {
   setTrainingId: (id: string) => void;
   setActiveModule: (module: TrainingModule | null) => void;
   addParticipant: (p: LiveParticipantEntry) => void;
+  batchAddParticipants: (all: LiveParticipantEntry[]) => void;
   removeParticipant: (userId: string) => void;
   setPaused: (paused: boolean) => void;
   setResponseCount: (moduleId: string, count: number) => void;
   setSocketStatus: (status: SocketStatus) => void;
   setStopwatch: (data: { moduleId: string; accumulatedSeconds: number; isRunning: boolean; lastStartedAt: string } | null) => void;
   setSessionStats: (stats: { submitted: number; totalParticipants: number; completionPct: number; liveSessionId: string } | null) => void;
+  // Permissions granted to the current user mid-session by a lead trainer
+  grantedPermissions: GrantablePermission[];
+  setGrantedPermissions: (perms: GrantablePermission[]) => void;
+  addGrantedPermission: (perm: GrantablePermission) => void;
+  revokeGrantedPermission: (perm: GrantablePermission) => void;
+  // Permissions the current user has granted to others (grantor view)
+  sessionGrants: Map<string, GrantablePermission[]>;
+  setSessionGrants: (grants: Record<string, GrantablePermission[]>) => void;
+  updateSessionGrant: (targetUserId: string, perm: GrantablePermission, granted: boolean) => void;
   reset: () => void;
 }
 
@@ -41,6 +51,8 @@ export const useLiveSessionStore = create<LiveSessionState>((set) => ({
   socketStatus: "connected",
   stopwatch: null,
   sessionStats: null,
+  grantedPermissions: [],
+  sessionGrants: new Map(),
   setTrainingId: (trainingId) => set({ trainingId }),
   setActiveModule: (activeModule) => set({ activeModule }),
   addParticipant: (p) =>
@@ -56,6 +68,12 @@ export const useLiveSessionStore = create<LiveSessionState>((set) => ({
       }
       const next = new Map(s.participants);
       next.set(p.userId, p);
+      return { participants: next };
+    }),
+  batchAddParticipants: (all) =>
+    set((s) => {
+      const next = new Map(s.participants);
+      for (const p of all) next.set(p.userId, p);
       return { participants: next };
     }),
   removeParticipant: (userId) =>
@@ -74,6 +92,22 @@ export const useLiveSessionStore = create<LiveSessionState>((set) => ({
   setSocketStatus: (socketStatus) => set({ socketStatus }),
   setStopwatch: (stopwatch) => set({ stopwatch }),
   setSessionStats: (sessionStats) => set({ sessionStats }),
+  setGrantedPermissions: (grantedPermissions) => set({ grantedPermissions }),
+  addGrantedPermission: (perm) => set((s) => ({
+    grantedPermissions: s.grantedPermissions.includes(perm) ? s.grantedPermissions : [...s.grantedPermissions, perm],
+  })),
+  revokeGrantedPermission: (perm) => set((s) => ({
+    grantedPermissions: s.grantedPermissions.filter((p) => p !== perm),
+  })),
+  setSessionGrants: (grants) => set({
+    sessionGrants: new Map(Object.entries(grants)),
+  }),
+  updateSessionGrant: (targetUserId, perm, granted) => set((s) => {
+    const next = new Map(s.sessionGrants);
+    const current = next.get(targetUserId) ?? [];
+    next.set(targetUserId, granted ? (current.includes(perm) ? current : [...current, perm]) : current.filter((p) => p !== perm));
+    return { sessionGrants: next };
+  }),
   reset: () =>
     set({
       trainingId: null,
@@ -84,5 +118,7 @@ export const useLiveSessionStore = create<LiveSessionState>((set) => ({
       socketStatus: "connected",
       stopwatch: null,
       sessionStats: null,
+      grantedPermissions: [],
+      sessionGrants: new Map(),
     }),
 }));

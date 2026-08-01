@@ -36,24 +36,25 @@ function RestoreTrainingCard({ t }: { t: Training }) {
   const restoreTraining = useRestoreTraining(workspaceId);
 
   return (
-    <div className="bg-white rounded-2xl border border-[#dadce0] shadow-sm flex flex-col overflow-hidden opacity-70">
-      <div className="h-32 bg-gray-200 flex-shrink-0" />
-      <div className="p-5 flex-1 flex flex-col">
-        <h3 className="text-[17px] font-bold text-gray-700 leading-snug mb-1">{t.title}</h3>
-        <p className="text-xs text-gray-400 mb-3">{t.days?.length || 0} days · Deleted</p>
+    <div className="bg-white rounded-lg border border-[#dadce0] flex flex-col overflow-hidden opacity-70 h-[280px]">
+      <div className="h-28 bg-[#f1f3f4] flex-shrink-0 flex flex-col justify-end p-4">
+        <h3 className="text-xl font-medium text-gray-700 leading-tight truncate">{t.title}</h3>
+        <p className="text-sm text-gray-500 truncate mt-0.5">{t.days?.length || 0} days · Deleted</p>
+      </div>
+      <div className="p-4 flex-1 flex flex-col bg-white">
         {t.labels && t.labels.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-auto">
             {t.labels.map((label, idx) => (
-              <span key={idx} className="px-3 py-1 bg-[#f1f3f4] text-gray-700 text-[11px] font-medium rounded-full">{label}</span>
+              <span key={idx} className="px-2.5 py-0.5 bg-[#f1f3f4] text-gray-700 text-[11px] font-medium rounded-full">{label}</span>
             ))}
           </div>
         )}
       </div>
-      <div className="px-5 py-4 border-t border-gray-100">
+      <div className="px-4 py-3 border-t border-[#dadce0] bg-white flex justify-end">
         <button
           onClick={() => restoreTraining.mutate(t.id)}
           disabled={restoreTraining.isPending}
-          className="w-full py-2 bg-[#1a73e8] text-white rounded-md hover:bg-[#1557b0] disabled:opacity-60 transition-colors text-sm font-medium shadow-sm"
+          className="px-4 py-2 text-[#1a73e8] hover:bg-blue-50/50 rounded-md transition-colors text-sm font-medium"
         >
           {restoreTraining.isPending ? "Restoring…" : "Restore"}
         </button>
@@ -75,48 +76,47 @@ function TrainingCard({ t, index }: { t: Training; index: number }) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-[#dadce0] hover:border-[#1a73e8] hover:shadow-md transition-all duration-200 group flex flex-col overflow-hidden">
+      <div className="bg-white rounded-lg border border-[#dadce0] hover:shadow-sm transition-all duration-200 group flex flex-col overflow-hidden h-[320px]">
         {/* Colored banner */}
         <div
-          className="h-32 relative flex-shrink-0"
+          className="h-28 relative flex-shrink-0 p-4 flex flex-col justify-end"
           style={{ backgroundColor: bannerColor(t.id) }}
         >
           <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
             <button
               onClick={(e) => { e.stopPropagation(); setIsEditModalOpen(true); }}
-              className="p-1.5 bg-black/20 hover:bg-black/35 text-white rounded-lg transition-colors"
+              className="p-2 hover:bg-black/20 text-white rounded-full transition-colors"
               title="Edit training"
             >
-              <Pencil size={13} />
+              <Pencil size={14} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); setIsDeleteModalOpen(true); }}
-              className="p-1.5 bg-black/20 hover:bg-black/35 text-white rounded-lg transition-colors"
+              className="p-2 hover:bg-black/20 text-white rounded-full transition-colors"
               title="Delete training"
             >
-              <Trash2 size={13} />
+              <Trash2 size={14} />
             </button>
           </div>
+          <h3 className="text-xl font-medium text-white leading-tight truncate">{t.title}</h3>
+          <p className="text-sm text-white/90 truncate mt-0.5">{t.days?.length || 0} days</p>
         </div>
 
         {/* Body */}
-        <div className="p-5 flex-1 flex flex-col">
-          <h3 className="text-[17px] font-bold text-gray-900 leading-snug mb-1.5">{t.title}</h3>
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="text-xs text-gray-500">{t.days?.length || 0} days</span>
-            <span className="text-xs text-gray-300">·</span>
-            <span className="flex items-center gap-1 text-xs text-gray-500">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block flex-shrink-0" />
+        <div className="p-4 flex-1 flex flex-col bg-white">
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+              <span className={cn("w-2 h-2 rounded-full", ["live", "connecting"].includes(t.sessionStatus) ? "bg-green-500 animate-pulse" : "bg-gray-300")} />
               {t.sessionStatus}
             </span>
           </div>
           {t.description && (
-            <SafeHTML html={t.description} className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-3 flex-1" />
+            <SafeHTML html={t.description} className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-3" />
           )}
           {t.labels && t.labels.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-auto pt-1">
               {t.labels.map((label, idx) => (
-                <span key={idx} className="px-3 py-1 bg-[#f1f3f4] text-gray-700 text-[11px] font-medium rounded-full">
+                <span key={idx} className="px-2.5 py-0.5 bg-[#f1f3f4] text-[#3c4043] text-[11px] font-medium rounded-full">
                   {label}
                 </span>
               ))}
@@ -125,20 +125,20 @@ function TrainingCard({ t, index }: { t: Training; index: number }) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+        <div className="px-4 py-3 border-t border-[#dadce0] flex items-center justify-between bg-white">
           <div className="flex gap-2">
             {["live", "connecting", "paused"].includes(t.sessionStatus) ? (
               <>
                 <Link
                   href={`/trainings/${t.id}/live`}
-                  className="text-xs px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium shadow-sm flex items-center gap-1.5"
+                  className="text-xs px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium shadow-sm flex items-center gap-1.5"
                 >
                   <Play size={12} />
                   Join Session
                 </Link>
                 <Link
                   href={`/trainings/${t.id}/studio`}
-                  className="text-xs px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors font-medium"
+                  className="text-xs px-3 py-2 text-gray-600 rounded-md hover:bg-gray-100 transition-colors font-medium"
                   title="Open Studio"
                 >
                   Studio
@@ -148,7 +148,7 @@ function TrainingCard({ t, index }: { t: Training; index: number }) {
               <Link
                 href={`/trainings/${t.id}/studio`}
                 data-tour={index === 0 ? "open-studio" : undefined}
-                className="text-xs px-5 py-2 bg-[#1a73e8] text-white rounded-md hover:bg-[#1557b0] transition-colors font-medium shadow-sm"
+                className="text-xs px-4 py-2 text-[#1a73e8] hover:bg-blue-50/50 rounded-md transition-colors font-medium"
               >
                 Open Studio
               </Link>
@@ -157,7 +157,7 @@ function TrainingCard({ t, index }: { t: Training; index: number }) {
           <Link
             href={`/trainings/${t.id}/analytics`}
             data-tour={index === 0 ? "analytics" : undefined}
-            className="text-xs text-gray-400 font-medium hover:text-[#1a73e8] flex items-center gap-1 transition-colors"
+            className="text-xs px-3 py-2 text-gray-500 hover:text-[#1a73e8] hover:bg-gray-50 rounded-md transition-colors font-medium flex items-center gap-1"
           >
             Analytics <ArrowRight size={12} />
           </Link>
@@ -296,9 +296,12 @@ export function WorkspaceDashboard() {
             <Link
               href="/trainings/new"
               data-tour="new-training"
-              className="px-5 py-2.5 bg-[#1a73e8] text-white rounded-md hover:bg-[#1557b0] shadow-sm transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-5 py-3 bg-white text-gray-700 rounded-full hover:bg-[#f8f9fa] shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),0_4px_8px_3px_rgba(60,64,67,0.15)] transition-all text-sm font-medium ml-2"
             >
-              + New Training
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 11V5H13V11H19V13H13V19H11V13H5V11H11Z" fill="#1a73e8"/>
+              </svg>
+              New
             </Link>
           )}
         </div>
@@ -307,11 +310,14 @@ export function WorkspaceDashboard() {
       {showTrash ? (
         trashLoading ? (
           <div className="flex items-center justify-center h-40">
-            <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-[#1a73e8] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : !trash?.length ? (
-          <div className="bg-white rounded-xl border border-dashed border-gray-100 p-12 text-center">
-            <h3 className="text-base font-semibold text-gray-900 mb-1">Trash is empty</h3>
+          <div className="bg-white rounded-lg border border-[#dadce0] p-12 text-center">
+            <div className="w-16 h-16 bg-[#f1f3f4] rounded-full mx-auto flex items-center justify-center mb-4">
+              <Trash2 size={24} className="text-gray-400" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-800 mb-1">Trash is empty</h3>
             <p className="text-sm text-gray-500">Deleted trainings will appear here.</p>
           </div>
         ) : (
@@ -323,18 +329,21 @@ export function WorkspaceDashboard() {
         )
       ) : trainingsLoading ? (
         <div className="flex items-center justify-center h-40">
-          <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-4 border-[#1a73e8] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : !trainings?.length ? (
-        <div className="bg-white rounded-xl border border-dashed border-gray-100 p-12 text-center">
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No trainings yet</h3>
+        <div className="bg-white rounded-lg border border-[#dadce0] p-12 text-center">
+          <div className="w-16 h-16 bg-[#f1f3f4] rounded-full mx-auto flex items-center justify-center mb-4">
+            <LayoutGrid size={24} className="text-gray-400" />
+          </div>
+          <h3 className="text-base font-semibold text-gray-800 mb-1">No trainings yet</h3>
           <p className="text-sm text-gray-500 mb-6">Create your first training to start building day-wise plans.</p>
           <Link
             href="/trainings/new"
             data-tour="new-training"
-            className="px-6 py-2.5 bg-[#1a73e8] text-white rounded-md hover:bg-[#1557b0] shadow-sm transition-colors text-sm font-medium inline-flex"
+            className="px-6 py-2 bg-[#1a73e8] text-white rounded-md hover:bg-[#1557b0] shadow-sm transition-colors text-sm font-medium inline-flex"
           >
-            Create Training
+            Create
           </Link>
         </div>
       ) : (

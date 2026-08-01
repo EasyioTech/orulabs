@@ -12,7 +12,7 @@ export function PollEditor({ module, config, onChange }: { module: TrainingModul
           <input
             value={config.pollQuestion ?? ""}
             onChange={(e) => onChange({ ...config, pollQuestion: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-100 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent"
             placeholder="What do you want to ask?"
           />
         </div>
@@ -21,7 +21,7 @@ export function PollEditor({ module, config, onChange }: { module: TrainingModul
           <button
             onClick={() => onChange({ ...config, allowMultiple: !config.allowMultiple })}
             className={cn("flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-colors",
-              config.allowMultiple ? "bg-brand-50 border-brand-200 text-brand-700" : "bg-white border-gray-100 text-gray-400")}
+              config.allowMultiple ? "bg-[#e8f0fe] border-[#d2e3fc] text-[#1557b0]" : "bg-white border-gray-100 text-gray-400")}
           >
             {config.allowMultiple ? <ToggleRight size={12} /> : <ToggleLeft size={12} />}
             {config.allowMultiple ? "On" : "Off"}
@@ -37,7 +37,7 @@ export function PollEditor({ module, config, onChange }: { module: TrainingModul
           </button>
         </div>
         {options.length === 0 && (
-          <div className="py-5 text-center bg-gray-50 rounded-xl border border-dashed border-gray-100">
+          <div className="py-5 text-center bg-gray-50 rounded border border-dashed border-gray-100">
             <p className="text-xs text-gray-400">No options yet. Add options above.</p>
           </div>
         )}
@@ -49,7 +49,7 @@ export function PollEditor({ module, config, onChange }: { module: TrainingModul
                 const updated = options.map((o: any, j: number) => (j === i ? e.target.value : o));
                 onChange({ ...config, pollOptions: updated });
               }}
-              className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+              className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
               placeholder={`Option ${i + 1}`}
             />
             <button

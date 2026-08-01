@@ -12,7 +12,7 @@ export function PulseEditor({ module, config, onChange }: { module: TrainingModu
           <input
             value={config.pulsePrompt ?? ""}
             onChange={(e) => onChange({ ...config, pulsePrompt: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-100 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent"
             placeholder="How are you feeling about this topic?"
           />
         </div>
@@ -22,7 +22,7 @@ export function PulseEditor({ module, config, onChange }: { module: TrainingModu
             rows={3}
             value={emojis.join("\n")}
             onChange={(e) => onChange({ ...config, pulseEmojis: e.target.value.split("\n").filter(Boolean) })}
-            className="w-full px-3 py-2.5 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none font-mono"
+            className="w-full px-3 py-2.5 border border-gray-100 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent resize-none font-mono"
             placeholder={"😊\n🙂\n😐\n😕\n😟"}
           />
         </div>
@@ -36,7 +36,7 @@ export function PulseEditor({ module, config, onChange }: { module: TrainingModu
           <button
             onClick={() => onChange({ ...config, isAnonymous: !config.isAnonymous })}
             className={cn("flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-colors",
-              config.isAnonymous ? "bg-brand-50 border-brand-200 text-brand-700" : "bg-white border-gray-100 text-gray-400")}
+              config.isAnonymous ? "bg-[#e8f0fe] border-[#d2e3fc] text-[#1557b0]" : "bg-white border-gray-100 text-gray-400")}
           >
             {config.isAnonymous ? <ToggleRight size={12} /> : <ToggleLeft size={12} />}
             {config.isAnonymous ? "On" : "Off"}

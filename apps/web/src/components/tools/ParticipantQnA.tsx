@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useResponseSubmit } from "@/hooks/useResponseSubmit";
 import { useMyModuleResponse } from "@/hooks/useMyModuleResponse";
 import { useIsTimeUp } from "@/hooks/useIsTimeUp";
@@ -13,6 +14,7 @@ interface Props {
 
 export function ParticipantQnA({ module, trainingId }: Props) {
   const { submit: submitResponse } = useResponseSubmit(trainingId);
+  const qc = useQueryClient();
   const isTimeUp = useIsTimeUp();
   const [question, setQuestion] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -27,6 +29,7 @@ export function ParticipantQnA({ module, trainingId }: Props) {
     const newQuestions = [...previousQuestions, question.trim()];
     
     await submitResponse(module.id, { type: "qna", questions: newQuestions });
+    qc.invalidateQueries({ queryKey: ["my-module-response", trainingId, module.id] });
     setSubmitted(true);
     setIsPending(false);
   };

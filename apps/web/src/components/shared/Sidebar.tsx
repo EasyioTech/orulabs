@@ -13,6 +13,7 @@ import {
   CreditCard,
   Crown,
   Sparkles,
+  Settings,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useWorkspaces } from "@/hooks/useWorkspace";
@@ -104,7 +105,7 @@ export function Sidebar() {
         </nav>
 
         {/* Bottom */}
-        <div className="py-3 border-t border-gray-100 flex-shrink-0">
+        <div className="py-3 border-t border-gray-100 flex-shrink-0 flex flex-col gap-1">
           {!isPro && hasWorkspace && !isParticipant && (
             <Link
               href="/subscription"
@@ -114,6 +115,13 @@ export function Sidebar() {
               Upgrade to Pro
             </Link>
           )}
+          <Link
+            href="/settings"
+            className="flex items-center gap-5 pl-6 pr-4 py-2.5 rounded-r-full text-[14.5px] font-medium text-[#3c4043] hover:bg-gray-100 transition-colors mr-4"
+          >
+            <Settings size={20} className="text-[#5f6368]" strokeWidth={2} />
+            Settings
+          </Link>
         </div>
       </aside>
     </>

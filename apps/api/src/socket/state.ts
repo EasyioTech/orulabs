@@ -1,4 +1,4 @@
-import type { TrainingRole } from "@oruclass/types";
+import type { TrainingRole, GrantablePermission } from "@oruclass/types";
 import { redis } from "../db/redis";
 
 export interface LiveParticipant {
@@ -14,6 +14,7 @@ export interface TrainingLiveState {
   activeModuleId: string | null;
   participants: Map<string, LiveParticipant>;
   isPaused: boolean;
+  sessionGrants: Map<string, Set<GrantablePermission>>;
 }
 
 // In-memory map for fast access within the process
@@ -28,6 +29,7 @@ export function getOrCreateState(trainingId: string): TrainingLiveState {
       activeModuleId: null,
       participants: new Map(),
       isPaused: false,
+      sessionGrants: new Map(),
     });
   }
   return liveState.get(trainingId)!;
@@ -59,6 +61,7 @@ export async function restoreState(trainingId: string): Promise<void> {
       activeModuleId: saved.activeModuleId,
       participants: new Map(),
       isPaused: saved.isPaused,
+      sessionGrants: new Map(),
     });
   } catch {
     // If Redis is unavailable fall back to fresh state
@@ -72,4 +75,50 @@ export function removeParticipant(trainingId: string, userId: string): void {
 export function cleanupTraining(trainingId: string): void {
   liveState.delete(trainingId);
   redis.del(REDIS_KEY(trainingId)).catch(() => {});
+  redis.del(GRANTS_KEY(trainingId)).catch(() => {});
+}
+
+const GRANTS_KEY = (trainingId: string) => `live:grants:${trainingId}`;
+
+export function grantPermission(trainingId: string, userId: string, permission: GrantablePermission): void {
+  const state = getOrCreateState(trainingId);
+  if (!state.sessionGrants.has(userId)) state.sessionGrants.set(userId, new Set());
+  state.sessionGrants.get(userId)!.add(permission);
+  persistGrants(trainingId);
+}
+
+export function revokePermission(trainingId: string, userId: string, permission: GrantablePermission): void {
+  const state = getOrCreateState(trainingId);
+  state.sessionGrants.get(userId)?.delete(permission);
+  persistGrants(trainingId);
+}
+
+export function getGrants(trainingId: string, userId: string): GrantablePermission[] {
+  return Array.from(getOrCreateState(trainingId).sessionGrants.get(userId) ?? []);
+}
+
+export function getAllGrants(trainingId: string): Record<string, GrantablePermission[]> {
+  const state = getOrCreateState(trainingId);
+  const result: Record<string, GrantablePermission[]> = {};
+  for (const [userId, perms] of state.sessionGrants) {
+    if (perms.size > 0) result[userId] = Array.from(perms);
+  }
+  return result;
+}
+
+function persistGrants(trainingId: string): void {
+  const grants = getAllGrants(trainingId);
+  redis.set(GRANTS_KEY(trainingId), JSON.stringify(grants), { EX: REDIS_TTL }).catch(() => {});
+}
+
+export async function restoreGrants(trainingId: string): Promise<void> {
+  try {
+    const raw = await redis.get(GRANTS_KEY(trainingId));
+    if (!raw) return;
+    const saved = JSON.parse(raw) as Record<string, GrantablePermission[]>;
+    const state = getOrCreateState(trainingId);
+    for (const [userId, perms] of Object.entries(saved)) {
+      state.sessionGrants.set(userId, new Set(perms));
+    }
+  } catch {}
 }

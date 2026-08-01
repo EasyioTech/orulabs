@@ -17,7 +17,7 @@ export function ParticipantTopBar() {
         >
           <Menu size={20} />
         </button>
-        <span className="text-[14px] font-bold text-brand-600 tracking-tight md:hidden">OruClass</span>
+        <span className="text-[14px] font-bold text-gray-800 tracking-tight md:hidden">OruLabs</span>
       </div>
       {user && (
         <div className="flex items-center gap-3">

@@ -26,7 +26,7 @@ export function QuizEditor({ module, config, onChange }: { module: TrainingModul
           </button>
         </div>
         {questions.length === 0 && (
-          <div className="py-6 text-center bg-gray-50 rounded-xl border border-dashed border-gray-100">
+          <div className="py-6 text-center bg-gray-50 rounded border border-dashed border-gray-100">
             <ListChecks size={20} className="text-gray-300 mx-auto mb-2" />
             <p className="text-xs text-gray-400">No questions yet. Add one above.</p>
           </div>
@@ -43,7 +43,7 @@ export function QuizEditor({ module, config, onChange }: { module: TrainingModul
                   const updated = questions.map((x: any, i: number) => (i === qi ? { ...x, text: e.target.value } : x));
                   onChange({ ...config, questions: updated });
                 }}
-                className="flex-1 px-4 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
+                className="flex-1 px-4 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-sm outline-none transition-colors"
                 placeholder="Question text"
               />
               <button
@@ -61,7 +61,7 @@ export function QuizEditor({ module, config, onChange }: { module: TrainingModul
                 );
                 onChange({ ...config, questions: updated });
               }}
-              className="w-full px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+              className="w-full px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
             >
               <option value="multiple_choice">Multiple Choice</option>
               <option value="short_answer">Short Answer</option>
@@ -102,7 +102,7 @@ export function QuizEditor({ module, config, onChange }: { module: TrainingModul
                           );
                           onChange({ ...config, questions: updated });
                         }}
-                        className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+                        className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                         placeholder={`Option ${oi + 1}`}
                       />
                       <button
@@ -180,7 +180,7 @@ export function QuizEditor({ module, config, onChange }: { module: TrainingModul
                       );
                       onChange({ ...config, questions: updated });
                     }}
-                    className="w-16 px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+                    className="w-16 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export function QuizEditor({ module, config, onChange }: { module: TrainingModul
                       );
                       onChange({ ...config, questions: updated });
                     }}
-                    className="w-16 px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+                    className="w-16 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                   />
                 </div>
               </div>

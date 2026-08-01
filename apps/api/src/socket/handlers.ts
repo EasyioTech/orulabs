@@ -13,7 +13,7 @@ import {
   liveSessions,
   liveSessionModuleStats,
 } from "../db/schema";
-import { getOrCreateState, removeParticipant, persistState, restoreState } from "./state";
+import { getOrCreateState, removeParticipant, persistState, restoreState, restoreGrants, grantPermission, revokePermission, getGrants, getAllGrants } from "./state";
 import { logger } from "../utils/logger";
 import { DrawUpdateSchema, DrawClearSchema, DrawSyncSchema, NoteCreateSchema, NotePositionSchema, TimerSyncSchema, ParticipantJoinSchema, ModuleUnlockSchema, ResponseSubmitSchema, StopwatchActionSchema, ModuleSetTimeLimitSchema, ChatSendSchema } from "@oruclass/validators";
 import { USER_NAME_CACHE_TTL_MS, USER_NAME_CACHE_MAX } from "../config/limits";
@@ -91,18 +91,20 @@ async function syncRosterFromDb(socket: AppSocket, trainingId: string, selfUserI
 
   const facilitatorRoles = new Map(facilitators.map((f) => [f.userId, f.role as TrainingRole]));
 
-  for (const p of rows) {
-    if (p.userId === selfUserId) continue;
-    const trainingRole = facilitatorRoles.get(p.userId) ?? null;
-    socket.emit("participant:joined", {
-      userId: p.userId,
-      name: p.name ?? "Unknown User",
-      role: trainingRole ? "trainer" : "participant",
-      trainingRole,
-      joinedAt: (p.joinedAt ?? new Date()).toISOString(),
-      connectionStatus: p.connectionStatus,
+  const participants = rows
+    .filter((p) => p.userId !== selfUserId)
+    .map((p) => {
+      const trainingRole = facilitatorRoles.get(p.userId) ?? null;
+      return {
+        userId: p.userId,
+        name: p.name ?? "Unknown User",
+        role: (trainingRole ? "trainer" : "participant") as "trainer" | "participant",
+        trainingRole,
+        joinedAt: (p.joinedAt ?? new Date()).toISOString(),
+        connectionStatus: p.connectionStatus,
+      };
     });
-  }
+  socket.emit("roster:snapshot", { participants });
 }
 
 // Per-event rate limits: [maxRequests, windowMs]
@@ -234,6 +236,7 @@ export function registerSocketHandlers(io: IO): void {
 
         // Restore persisted state from Redis if this is the first connection after restart
         await restoreState(trainingId);
+        await restoreGrants(trainingId);
 
         // Never trust the client-supplied role. A "trainer" claim is only honored
         // if the user is a real facilitator in DB; otherwise it is silently
@@ -344,6 +347,14 @@ export function registerSocketHandlers(io: IO): void {
             }
           }
         }
+
+        // Send grants snapshot: own granted permissions + full map for assign_roles users
+        const myGrants = getGrants(trainingId, userId);
+        const canAssign = trainingRole && hasPermission(trainingRole, "assign_roles");
+        socket.emit("session:grants_snapshot", {
+          myGrants,
+          allGrants: canAssign ? getAllGrants(trainingId) : {},
+        });
       }),
     );
 
@@ -360,6 +371,7 @@ export function registerSocketHandlers(io: IO): void {
         // can be stale if a trainer was demoted mid-session.
         const state = getOrCreateState(trainingId);
         const prevModuleId = state.activeModuleId;
+        const sessionGrants = getGrants(trainingId, userId);
 
         let moduleData: typeof trainingModules.$inferSelect | undefined;
         let stopwatchData: typeof liveSessionModuleStats.$inferSelect | undefined;
@@ -372,13 +384,9 @@ export function registerSocketHandlers(io: IO): void {
                 eq(trainingFacilitators.userId, userId),
               ),
             });
-            // Only roles with unlock_modules (lead_trainer, full_editor) may drive
-            // the live room. partial_editor / facilitation_support are denied even
-            // though they're facilitators.
-            if (!facilitator || !hasPermission(facilitator.role as TrainingRole, "unlock_modules")) {
-              denied = true;
-              return;
-            }
+            const hasGrant = sessionGrants.includes("unlock_modules");
+            if (!facilitator && !hasGrant) { denied = true; return; }
+            if (facilitator && !hasPermission(facilitator.role as TrainingRole, "unlock_modules") && !hasGrant) { denied = true; return; }
 
             // Confirm the module actually belongs to this training before unlocking.
             const mod = await tx.query.trainingModules.findFirst({
@@ -494,6 +502,7 @@ export function registerSocketHandlers(io: IO): void {
         }
         const { trainingId, moduleId, action } = parsed.data;
 
+        const sessionGrants = getGrants(trainingId, userId);
         let stopwatchData: typeof liveSessionModuleStats.$inferSelect | undefined;
         let denied = false;
         try {
@@ -504,12 +513,9 @@ export function registerSocketHandlers(io: IO): void {
                 eq(trainingFacilitators.userId, userId),
               ),
             });
-            // Stopwatch is a room-control action — requires pause_room (lead_trainer,
-            // full_editor). partial_editor / facilitation_support cannot control it.
-            if (!facilitator || !hasPermission(facilitator.role as TrainingRole, "pause_room")) {
-              denied = true;
-              return;
-            }
+            const hasGrant = sessionGrants.includes("pause_room");
+            if (!facilitator && !hasGrant) { denied = true; return; }
+            if (facilitator && !hasPermission(facilitator.role as TrainingRole, "pause_room") && !hasGrant) { denied = true; return; }
 
             const liveSession = await tx.query.liveSessions.findFirst({
               where: and(eq(liveSessions.trainingId, trainingId), eq(liveSessions.status, "active")),
@@ -590,6 +596,7 @@ export function registerSocketHandlers(io: IO): void {
         }
         const { trainingId, moduleId, timeLimitSeconds } = parsed.data;
 
+        const sessionGrants = getGrants(trainingId, userId);
         let moduleData: typeof trainingModules.$inferSelect | undefined;
         let denied = false;
         try {
@@ -600,11 +607,9 @@ export function registerSocketHandlers(io: IO): void {
                 eq(trainingFacilitators.userId, userId),
               ),
             });
-            // Editing the live time limit is a room-control action — same gate as unlock.
-            if (!facilitator || !hasPermission(facilitator.role as TrainingRole, "unlock_modules")) {
-              denied = true;
-              return;
-            }
+            const hasGrant = sessionGrants.includes("unlock_modules");
+            if (!facilitator && !hasGrant) { denied = true; return; }
+            if (facilitator && !hasPermission(facilitator.role as TrainingRole, "unlock_modules") && !hasGrant) { denied = true; return; }
 
             const mod = await tx.query.trainingModules.findFirst({
               where: and(eq(trainingModules.id, moduleId), eq(trainingModules.trainingId, trainingId)),
@@ -862,30 +867,56 @@ export function registerSocketHandlers(io: IO): void {
     });
 
     // ── ATTENTION TRACKING ──────────────────────────────────────────────────
-    socket.on("participant:focus_lost", async (payload: unknown) => {
-      const tid = (payload as any)?.trainingId;
-      if (!tid || socket.data.trainingId !== tid) return;
-
+    socket.on("participant:focus_lost", async (_payload: unknown) => {
+      const tid = socket.data.trainingId;
+      if (!tid) return;
       const userName = await getUserName(userId);
-      // Broadcast to the trainers only!
-      io.to(`training:${tid}:trainers`).emit("trainer:attention_alert", {
-        userId,
-        userName,
-        isFocused: false,
-      });
+      io.to(`training:${tid}:trainers`).emit("trainer:attention_alert", { userId, userName, isFocused: false });
     });
 
-    socket.on("participant:focus_restored", async (payload: unknown) => {
-      const tid = (payload as any)?.trainingId;
-      if (!tid || socket.data.trainingId !== tid) return;
-
+    socket.on("participant:focus_restored", async (_payload: unknown) => {
+      const tid = socket.data.trainingId;
+      if (!tid) return;
       const userName = await getUserName(userId);
-      // Broadcast to the trainers only!
-      io.to(`training:${tid}:trainers`).emit("trainer:attention_alert", {
-        userId,
-        userName,
-        isFocused: true,
-      });
+      io.to(`training:${tid}:trainers`).emit("trainer:attention_alert", { userId, userName, isFocused: true });
+    });
+
+    socket.on("session:grant_permission", async (data: unknown, ack?: (r: { ok: boolean; error?: string }) => void) => {
+      const { trainingId, targetUserId, permission } = (data ?? {}) as { trainingId?: string; targetUserId?: string; permission?: string };
+      if (!trainingId || !targetUserId || !permission) { ack?.({ ok: false, error: "Bad payload" }); return; }
+      if (!socket.data.trainingRole || !hasPermission(socket.data.trainingRole, "assign_roles")) {
+        ack?.({ ok: false, error: "Insufficient permissions" }); return;
+      }
+      const validPermissions = ["unlock_modules", "pause_room"] as const;
+      if (!validPermissions.includes(permission as typeof validPermissions[number])) {
+        ack?.({ ok: false, error: "Invalid permission" }); return;
+      }
+      grantPermission(trainingId, targetUserId, permission as "unlock_modules" | "pause_room");
+      const senderName = await getUserName(userId);
+      // Emit to every socket that belongs to targetUserId in this training
+      const sockets = await io.in(`training:${trainingId}`).fetchSockets();
+      for (const s of sockets) {
+        if (s.data.userId === targetUserId) {
+          s.emit("session:permission_granted", { permission: permission as "unlock_modules" | "pause_room", grantedBy: senderName });
+        }
+      }
+      ack?.({ ok: true });
+    });
+
+    socket.on("session:revoke_permission", async (data: unknown, ack?: (r: { ok: boolean; error?: string }) => void) => {
+      const { trainingId, targetUserId, permission } = (data ?? {}) as { trainingId?: string; targetUserId?: string; permission?: string };
+      if (!trainingId || !targetUserId || !permission) { ack?.({ ok: false, error: "Bad payload" }); return; }
+      if (!socket.data.trainingRole || !hasPermission(socket.data.trainingRole, "assign_roles")) {
+        ack?.({ ok: false, error: "Insufficient permissions" }); return;
+      }
+      revokePermission(trainingId, targetUserId, permission as "unlock_modules" | "pause_room");
+      const sockets = await io.in(`training:${trainingId}`).fetchSockets();
+      for (const s of sockets) {
+        if (s.data.userId === targetUserId) {
+          s.emit("session:permission_revoked", { permission: permission as "unlock_modules" | "pause_room" });
+        }
+      }
+      ack?.({ ok: true });
     });
   });
 }

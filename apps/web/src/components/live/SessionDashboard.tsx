@@ -136,7 +136,7 @@ export function SessionDashboard({ training }: Props) {
         {/* Progress bar */}
         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-brand-500 rounded-full transition-all duration-700"
+            className="h-full bg-[#1a73e8] rounded-full transition-all duration-700"
             style={{ width: `${Math.min(100, completionPct)}%` }}
           />
         </div>
@@ -162,13 +162,13 @@ export function SessionDashboard({ training }: Props) {
                 autoFocus
                 min={1}
               />
-              <button type="submit" className="text-[10px] text-brand-600 font-semibold">Set</button>
+              <button type="submit" className="text-[10px] text-[#1a73e8] font-semibold">Set</button>
               <button type="button" onClick={() => setEditingTarget(false)} className="text-[10px] text-gray-400">×</button>
             </form>
           ) : (
             <button
               onClick={() => { setTargetInput(target ? String(target) : ""); setEditingTarget(true); }}
-              className="text-[10px] text-brand-600 font-semibold hover:underline tabular-nums"
+              className="text-[10px] text-[#1a73e8] font-semibold hover:underline tabular-nums"
             >
               {target ? `${submitted}/${target}` : "Set target"}
             </button>

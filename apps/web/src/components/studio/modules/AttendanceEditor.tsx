@@ -35,7 +35,7 @@ export function AttendanceEditor({ module, config, onChange }: { module: Trainin
           </button>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-xl">
+        <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded">
           <div className="w-4 h-4 rounded-full bg-teal-500 flex items-center justify-center flex-shrink-0">
             <CheckCircle2 size={10} className="text-white" strokeWidth={3} />
           </div>
@@ -44,18 +44,18 @@ export function AttendanceEditor({ module, config, onChange }: { module: Trainin
         </div>
 
         {fields.length === 0 && (
-          <div className="py-5 text-center bg-gray-50 rounded-xl border border-dashed border-gray-100">
+          <div className="py-5 text-center bg-gray-50 rounded border border-dashed border-gray-100">
             <p className="text-xs text-gray-400">No extra fields — only name will be collected.</p>
           </div>
         )}
 
         {fields.map((field: any, i: number) => (
-          <div key={field.id} className="bg-gray-50 rounded-xl border border-gray-100 p-3 space-y-2">
+          <div key={field.id} className="bg-gray-50 rounded border border-gray-100 p-3 space-y-2">
             <div className="flex items-center gap-2">
               <input
                 value={field.label}
                 onChange={(e) => updateField(i, { label: e.target.value })}
-                className="flex-1 px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="flex-1 px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#1a73e8]"
                 placeholder="Field label (e.g. Organization)"
               />
               <button
@@ -69,7 +69,7 @@ export function AttendanceEditor({ module, config, onChange }: { module: Trainin
               <select
                 value={field.type}
                 onChange={(e) => updateField(i, { type: e.target.value as "text" | "email" | "tel" | "select" })}
-                className="flex-1 px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="flex-1 px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#1a73e8]"
               >
                 <option value="text">Text</option>
                 <option value="email">Email</option>
@@ -81,7 +81,7 @@ export function AttendanceEditor({ module, config, onChange }: { module: Trainin
                 className={cn(
                   "flex items-center gap-1 text-[10px] font-semibold px-2.5 rounded-lg border transition-colors",
                   field.required
-                    ? "bg-brand-50 border-brand-200 text-brand-700"
+                    ? "bg-[#e8f0fe] border-[#d2e3fc] text-[#1557b0]"
                     : "bg-white border-gray-100 text-gray-400",
                 )}
               >
@@ -98,7 +98,7 @@ export function AttendanceEditor({ module, config, onChange }: { module: Trainin
                   onChange={(e) =>
                     updateField(i, { options: e.target.value.split("\n").filter(Boolean) })
                   }
-                  className="w-full px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                  className="w-full px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#1a73e8] resize-none"
                   placeholder={"Option A\nOption B\nOption C"}
                 />
               </div>

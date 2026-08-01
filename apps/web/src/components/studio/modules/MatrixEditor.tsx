@@ -13,7 +13,7 @@ export function MatrixEditor({ module, config, onChange }: { module: TrainingMod
             <p className="text-xs font-semibold text-gray-700">Rows</p>
             <button
               onClick={() => onChange({ ...config, rows: [...rows, `Row ${rows.length + 1}`] })}
-              className="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1"
+              className="text-xs text-[#1a73e8] hover:text-brand-800 font-medium flex items-center gap-1"
             >
               <Plus size={11} /> Add row
             </button>
@@ -27,7 +27,7 @@ export function MatrixEditor({ module, config, onChange }: { module: TrainingMod
                     const updated = rows.map((x: any, j: number) => (j === i ? e.target.value : x));
                     onChange({ ...config, rows: updated });
                   }}
-                  className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+                  className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                 />
                 <button
                   onClick={() => onChange({ ...config, rows: rows.filter((_: any, j: number) => j !== i) })}
@@ -44,7 +44,7 @@ export function MatrixEditor({ module, config, onChange }: { module: TrainingMod
             <p className="text-xs font-semibold text-gray-700">Columns</p>
             <button
               onClick={() => onChange({ ...config, columns: [...cols, `Col ${cols.length + 1}`] })}
-              className="text-xs text-brand-600 hover:text-brand-800 font-medium flex items-center gap-1"
+              className="text-xs text-[#1a73e8] hover:text-brand-800 font-medium flex items-center gap-1"
             >
               <Plus size={11} /> Add column
             </button>
@@ -58,7 +58,7 @@ export function MatrixEditor({ module, config, onChange }: { module: TrainingMod
                     const updated = cols.map((x: any, j: number) => (j === i ? e.target.value : x));
                     onChange({ ...config, columns: updated });
                   }}
-                  className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b-2 border-transparent border-b-gray-400 focus:border-b-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
+                  className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                 />
                 <button
                   onClick={() => onChange({ ...config, columns: cols.filter((_: any, j: number) => j !== i) })}
