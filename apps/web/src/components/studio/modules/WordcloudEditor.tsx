@@ -3,7 +3,7 @@ import { ChevronUp, ChevronDown, Trash2, Plus, X, ToggleLeft, ToggleRight, Layou
 import { cn } from "@oruclass/utils";
 import type { TrainingModule, ModuleConfig, FormField, FormFieldType } from "@oruclass/types";
 
-export function WordcloudEditor({ module, config, onChange }: { module: TrainingModule; config: any; onChange: (c: any) => void }) {
+export function WordcloudEditor({ module, config, onChange }: { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void }) {
   return (
       <div className="space-y-3 mt-4">
         <div>

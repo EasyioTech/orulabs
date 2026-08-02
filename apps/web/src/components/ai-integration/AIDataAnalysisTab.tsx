@@ -7,10 +7,11 @@ import { DataVisualization } from "./DataVisualization";
 import { WorkspaceAgent } from "./WorkspaceAgent";
 import { BarChart3, Settings2, Cpu } from "lucide-react";
 import { cn } from "@oruclass/utils";
+import type { AnalyzedData } from "./types";
 
 export function AIDataAnalysisTab({ workspaceId }: { workspaceId: string }) {
   const [activeSection, setActiveSection] = useState<"model" | "analysis" | "agent">("agent");
-  const [analyzedData, setAnalyzedData] = useState<any>(null);
+  const [analyzedData, setAnalyzedData] = useState<AnalyzedData | null>(null);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">

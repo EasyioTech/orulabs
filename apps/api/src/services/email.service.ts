@@ -53,8 +53,10 @@ function stripHtml(html: string) {
 // Pull a bare address out of "Name <addr@x>" for the unsubscribe mailbox / domain hints.
 const FROM_ADDR = (FROM.match(/<([^>]+)>/)?.[1] ?? FROM).trim();
 
+const isDev = process.env.NODE_ENV !== "production";
+
 async function send(to: string, subject: string, html: string) {
-  console.log(`[email] Attempting to send "${subject}" to ${to} from ${FROM}`);
+  if (isDev) console.log(`[email] Attempting to send "${subject}" to ${to} from ${FROM}`);
   try {
     const text = stripHtml(html);
     const response = await resend.emails.send({
@@ -69,7 +71,7 @@ async function send(to: string, subject: string, html: string) {
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
       },
     });
-    console.log(`[email] Resend response:`, JSON.stringify(response));
+    if (isDev) console.log(`[email] Resend response:`, JSON.stringify(response));
     if (response.error) {
       console.error("[email] send failed:", response.error);
       return false;

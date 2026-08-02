@@ -10,6 +10,13 @@ import Link from "next/link";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useParams } from "next/navigation";
 
+const PROVIDER_LABELS: Record<string, string> = {
+  openai: "OpenAI",
+  anthropic: "Anthropic",
+  gemini: "Google Gemini",
+  groq: "Groq",
+};
+
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -92,7 +99,7 @@ export function AiChatPanel({ onClose }: Props) {
           <div>
             <p className="text-sm font-medium text-gray-900 tracking-tight">Workspace AI</p>
             <p className="text-[11px] text-gray-500">
-              {provider === "openai" ? "OpenAI" : "Anthropic"} · {selectedModelId === "custom" ? customModelName || "Custom" : selectedModelId}
+              {PROVIDER_LABELS[provider]} · {selectedModelId === "custom" ? customModelName || "Custom" : selectedModelId}
             </p>
           </div>
         </div>

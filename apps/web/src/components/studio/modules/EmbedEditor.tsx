@@ -1,8 +1,7 @@
-import React from "react";
 import { ChevronUp, ChevronDown, Trash2, Plus, X } from "lucide-react";
-import type { TrainingModule } from "@oruclass/types";
+import type { TrainingModule, ModuleConfig } from "@oruclass/types";
 
-export function EmbedEditor({ module, config, onChange }: { module: TrainingModule; config: any; onChange: (c: any) => void }) {
+export function EmbedEditor({ module, config, onChange }: { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void }) {
 if (module.moduleType === "embed") {
     // Migration from old single-embed structure
     const embeds = config.embeds || (config.embedUrl ? [{ id: crypto.randomUUID(), url: config.embedUrl, title: config.embedTitle, description: config.embedDescription }] : []);
@@ -11,12 +10,12 @@ if (module.moduleType === "embed") {
     const addEmbed = () => onChange({ ...config, embeds: [...embeds, { id: crypto.randomUUID(), url: "" }] });
 
     const updateEmbed = (i: number, patch: Partial<Embed>) => {
-      const updated = embeds.map((e: any, j: number) => j === i ? { ...e, ...patch } : e);
+      const updated = embeds.map((e, j) => j === i ? { ...e, ...patch } : e);
       onChange({ ...config, embeds: updated });
     };
 
     const removeEmbed = (i: number) => {
-      onChange({ ...config, embeds: embeds.filter((_: any, j: number) => j !== i) });
+      onChange({ ...config, embeds: embeds.filter((_, j) => j !== i) });
     };
 
     const moveEmbed = (i: number, dir: -1 | 1) => {
@@ -46,7 +45,7 @@ if (module.moduleType === "embed") {
           </div>
         )}
 
-        {embeds.map((embed: any, i: number) => (
+        {embeds.map((embed, i) => (
           <div key={embed.id} className="bg-gray-50 rounded border border-gray-100 p-3 space-y-3 relative group">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-gray-500 uppercase">Embed {i + 1}</span>

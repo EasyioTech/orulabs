@@ -3,7 +3,7 @@ import { ChevronUp, ChevronDown, Trash2, Plus, X, ToggleLeft, ToggleRight, Layou
 import { cn } from "@oruclass/utils";
 import type { TrainingModule, ModuleConfig, FormField, FormFieldType } from "@oruclass/types";
 
-export function PollEditor({ module, config, onChange }: { module: TrainingModule; config: any; onChange: (c: any) => void }) {
+export function PollEditor({ module, config, onChange }: { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void }) {
   const options = (config.pollOptions as string[]) ?? [];
     return (
       <div className="space-y-3 mt-4">
@@ -46,14 +46,14 @@ export function PollEditor({ module, config, onChange }: { module: TrainingModul
             <input
               value={opt}
               onChange={(e) => {
-                const updated = options.map((o: any, j: number) => (j === i ? e.target.value : o));
+                const updated = options.map((o, j) => (j === i ? e.target.value : o));
                 onChange({ ...config, pollOptions: updated });
               }}
               className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
               placeholder={`Option ${i + 1}`}
             />
             <button
-              onClick={() => onChange({ ...config, pollOptions: options.filter((_: any, j: number) => j !== i) })}
+              onClick={() => onChange({ ...config, pollOptions: options.filter((_, j) => j !== i) })}
               className="text-gray-300 hover:text-red-500 transition-colors"
             >
               <X size={14} />

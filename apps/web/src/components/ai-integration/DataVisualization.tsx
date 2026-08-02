@@ -3,12 +3,15 @@
 import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from "recharts";
-import { Share2, Download, Table2, Presentation } from "lucide-react";
+import { Share2, Download, Table2, Presentation, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@oruclass/utils";
+import type { AnalyzedData } from "./types";
 
-export function DataVisualization({ data }: { data: any }) {
-  const [activeView, setActiveView] = useState<"bar" | "line" | "area" | "table">("area");
+type ChartView = "bar" | "line" | "area" | "table";
+
+export function DataVisualization({ data }: { data: AnalyzedData | null }) {
+  const [activeView, setActiveView] = useState<ChartView>("area");
 
   if (!data) return null;
 
@@ -30,7 +33,7 @@ export function DataVisualization({ data }: { data: any }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {data.metrics?.map((metric: any, i: number) => (
+        {data.metrics?.map((metric, i) => (
           <div key={i} className="p-4 bg-white rounded border border-gray-300 shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wider text-gray-500">{metric.label}</div>
             <div className="mt-1 flex items-baseline gap-3">
@@ -50,16 +53,16 @@ export function DataVisualization({ data }: { data: any }) {
         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h4 className="text-sm font-medium text-gray-700">Temporal Performance</h4>
           <div className="flex bg-gray-100 rounded border border-gray-200 p-0.5">
-            {[
+            {([
               { id: "area", icon: Presentation, label: "Area" },
               { id: "bar", icon: BarChart, label: "Bar" },
               { id: "table", icon: Table2, label: "Table" },
-            ].map((view) => {
-              const Icon = view.icon as any;
+            ] as { id: ChartView; icon: LucideIcon; label: string }[]).map((view) => {
+              const Icon = view.icon;
               return (
                 <button
                   key={view.id}
-                  onClick={() => setActiveView(view.id as any)}
+                  onClick={() => setActiveView(view.id)}
                   className={cn(
                     "p-1.5 rounded transition-colors",
                     activeView === view.id 
@@ -130,7 +133,7 @@ export function DataVisualization({ data }: { data: any }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.chartData.map((row: any, i: number) => (
+                  {data.chartData.map((row, i) => (
                     <tr key={i} className="bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 font-medium text-gray-900">{row.name}</td>
                       <td className="px-4 py-3 text-right text-gray-600">{row.sales.toLocaleString()}</td>

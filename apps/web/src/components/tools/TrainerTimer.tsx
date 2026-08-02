@@ -19,7 +19,7 @@ export function TrainerTimer({ module, trainingId }: Props) {
 
   const broadcast = useCallback(
     (r: number, isRunning: boolean) => {
-      socket?.emit("timer:sync" as any, { trainingId, moduleId: module.id, remaining: r, running: isRunning, duration });
+      socket?.emit("timer:sync", { trainingId, moduleId: module.id, remaining: r, running: isRunning, duration });
     },
     [socket, trainingId, module.id, duration],
   );

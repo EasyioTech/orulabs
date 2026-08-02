@@ -163,19 +163,15 @@ workspacesRouter.get("/:workspaceId/responses", workspaceTenantMiddleware, async
     orderBy: (responses, { desc }) => [desc(responses.submittedAt)]
   });
 
-  // Map over responses and attach day data from module
-  const responseIds = responses.map(r => r.module?.id).filter(Boolean);
-  let moduleDayMap: Record<string, typeof responses[0]["module"] & { day: any }> = {};
-
-  if (responseIds.length > 0) {
-    const modulesWithDays = await db.query.trainingModules.findMany({
-      where: inArray(trainingModules.id, responseIds),
-      with: { day: true },
-    });
-    moduleDayMap = Object.fromEntries(
-      modulesWithDays.map(m => [m.id, { ...m, day: m.day }])
-    );
-  }
+  // Attach day data to each response's module (type fully inferred from the query).
+  const responseIds = responses.map(r => r.module?.id).filter((id): id is string => Boolean(id));
+  const modulesWithDays = responseIds.length
+    ? await db.query.trainingModules.findMany({
+        where: inArray(trainingModules.id, responseIds),
+        with: { day: true },
+      })
+    : [];
+  const moduleDayMap = Object.fromEntries(modulesWithDays.map(m => [m.id, m]));
 
   const enrichedResponses = responses.map(r => ({
     ...r,

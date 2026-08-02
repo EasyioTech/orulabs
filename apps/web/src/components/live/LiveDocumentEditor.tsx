@@ -73,7 +73,7 @@ function EditorView({ provider, ydoc, initialContent, minHeight }: { provider: H
     };
     
     // Set initial status
-    if ((provider as any).status === "connected") setStatus("connected");
+    if ((provider as { status?: string }).status === "connected") setStatus("connected");
     
     provider.on("status", handleStatus);
     return () => {

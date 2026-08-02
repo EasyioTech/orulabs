@@ -31,8 +31,8 @@ export function ParticipantGrid({ trainingId, workspaceId, joinToken }: { traini
   function toggleGrant(targetUserId: string, permission: GrantablePermission) {
     const current = sessionGrants.get(targetUserId) ?? [];
     const granted = !current.includes(permission);
-    const event = granted ? "session:grant_permission" : "session:revoke_permission";
-    socket?.emit(event as any, { trainingId, targetUserId, permission });
+    if (granted) socket?.emit("session:grant_permission", { trainingId, targetUserId, permission });
+    else socket?.emit("session:revoke_permission", { trainingId, targetUserId, permission });
     updateSessionGrant(targetUserId, permission, granted);
   }
 

@@ -1,7 +1,7 @@
 import React from "react";
 import type { TrainingModule, ModuleConfig } from "@oruclass/types";
 
-export function WhiteboardEditor({ module, config, onChange }: { module: TrainingModule; config: any; onChange: (c: any) => void }) {
+export function WhiteboardEditor({ module, config, onChange }: { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void }) {
   return (
     <div className="mt-4">
       <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-4">

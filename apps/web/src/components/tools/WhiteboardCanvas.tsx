@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSocket } from "@/hooks/useSocket";
 import { useAuthStore } from "@/store/auth";
 import type { TrainingModule } from "@oruclass/types";
-import { AdvancedWhiteboard } from "./AdvancedWhiteboard";
+import { AdvancedWhiteboard, type WhiteboardSnapshot } from "./AdvancedWhiteboard";
 
 interface Props {
   module: TrainingModule;
@@ -14,10 +14,10 @@ interface Props {
 export function WhiteboardCanvas({ module, trainingId }: Props) {
   const socket = useSocket();
   const user = useAuthStore((s) => s.user);
-  const [snapshot, setSnapshot] = useState<any>(null);
+  const [snapshot, setSnapshot] = useState<WhiteboardSnapshot | null>(null);
 
   useEffect(() => {
-    const handleSync = ({ snapshot: newSnapshot }: { snapshot?: any }) => {
+    const handleSync = ({ snapshot: newSnapshot }: { snapshot?: WhiteboardSnapshot }) => {
       if (newSnapshot) setSnapshot(newSnapshot);
     };
 
@@ -27,7 +27,7 @@ export function WhiteboardCanvas({ module, trainingId }: Props) {
     };
   }, [socket]);
 
-  const handleChange = useCallback((newSnapshot: any) => {
+  const handleChange = useCallback((newSnapshot: WhiteboardSnapshot) => {
     socket.emit("draw:sync", { moduleId: module.id, trainingId, snapshot: newSnapshot });
   }, [socket, module.id, trainingId]);
 

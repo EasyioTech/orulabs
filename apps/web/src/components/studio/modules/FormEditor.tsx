@@ -1,10 +1,9 @@
-import React, { useState } from "react";
-import { ChevronUp, ChevronDown, Trash2, Plus, X, ToggleLeft, ToggleRight, LayoutTemplate, ListChecks, CheckCircle2 } from "lucide-react";
+import { Plus, X, ToggleLeft, ToggleRight } from "lucide-react";
 import { cn } from "@oruclass/utils";
 import type { TrainingModule, ModuleConfig, FormField, FormFieldType } from "@oruclass/types";
 
-export function FormEditor({ module, config, onChange }: { module: TrainingModule; config: any; onChange: (c: any) => void }) {
-  const fields = (config.formFields as FormField[]) ?? [];
+export function FormEditor({ config, onChange }: { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void }) {
+  const fields = config.formFields ?? [];
     const addField = () =>
       onChange({
         ...config,
@@ -14,11 +13,11 @@ export function FormEditor({ module, config, onChange }: { module: TrainingModul
         ],
       });
     const updateField = (i: number, patch: Partial<FormField>) => {
-      const updated = fields.map((f: any, j: number) => (j === i ? { ...f, ...patch } : f));
+      const updated = fields.map((f, j) => (j === i ? { ...f, ...patch } : f));
       onChange({ ...config, formFields: updated });
     };
     const removeField = (i: number) =>
-      onChange({ ...config, formFields: fields.filter((_: any, j: number) => j !== i) });
+      onChange({ ...config, formFields: fields.filter((_, j) => j !== i) });
 
     return (
       <div className="space-y-4 mt-4">
@@ -58,7 +57,7 @@ export function FormEditor({ module, config, onChange }: { module: TrainingModul
           </div>
         )}
 
-        {fields.map((field: any, i: number) => (
+        {fields.map((field, i) => (
           <div key={field.id} className="bg-gray-50 rounded border border-gray-100 p-3 space-y-3">
             <div className="flex items-start gap-2">
               <input

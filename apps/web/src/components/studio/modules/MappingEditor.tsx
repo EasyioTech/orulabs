@@ -1,10 +1,8 @@
-import React, { useState } from "react";
-import { ChevronUp, ChevronDown, Trash2, Plus, X, ToggleLeft, ToggleRight, LayoutTemplate, ListChecks, CheckCircle2 } from "lucide-react";
-import { cn } from "@oruclass/utils";
-import type { TrainingModule, ModuleConfig, FormField, FormFieldType } from "@oruclass/types";
+import { Plus, X } from "lucide-react";
+import type { TrainingModule, ModuleConfig } from "@oruclass/types";
 
-export function MappingEditor({ module, config, onChange }: { module: TrainingModule; config: any; onChange: (c: any) => void }) {
-  const focusAreas = (config.mappingFocusAreas as { id: string; title: string; numFields: number }[]) ?? [];
+export function MappingEditor({ config, onChange }: { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void }) {
+  const focusAreas = config.mappingFocusAreas ?? [];
     return (
       <div className="space-y-4 mt-4">
         <div className="flex items-center justify-between mb-2">
@@ -31,7 +29,7 @@ export function MappingEditor({ module, config, onChange }: { module: TrainingMo
           </div>
         )}
 
-        {focusAreas.map((area: any, i: number) => (
+        {focusAreas.map((area, i) => (
           <div key={area.id} className="bg-gray-50 rounded border border-gray-100 p-3 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 space-y-1">
@@ -39,7 +37,7 @@ export function MappingEditor({ module, config, onChange }: { module: TrainingMo
                 <input
                   value={area.title}
                   onChange={(e) => {
-                    const updated = focusAreas.map((x: any, j: number) => (j === i ? { ...x, title: e.target.value } : x));
+                    const updated = focusAreas.map((x, j) => (j === i ? { ...x, title: e.target.value } : x));
                     onChange({ ...config, mappingFocusAreas: updated });
                   }}
                   className="w-full px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
@@ -47,7 +45,7 @@ export function MappingEditor({ module, config, onChange }: { module: TrainingMo
                 />
               </div>
               <button
-                onClick={() => onChange({ ...config, mappingFocusAreas: focusAreas.filter((_: any, j: number) => j !== i) })}
+                onClick={() => onChange({ ...config, mappingFocusAreas: focusAreas.filter((_, j) => j !== i) })}
                 className="text-gray-300 hover:text-red-500 transition-colors mt-5 shrink-0"
               >
                 <X size={14} />
@@ -62,7 +60,7 @@ export function MappingEditor({ module, config, onChange }: { module: TrainingMo
                 max={20}
                 value={area.numFields}
                 onChange={(e) => {
-                  const updated = focusAreas.map((x: any, j: number) => (j === i ? { ...x, numFields: Number(e.target.value) } : x));
+                  const updated = focusAreas.map((x, j) => (j === i ? { ...x, numFields: Number(e.target.value) } : x));
                   onChange({ ...config, mappingFocusAreas: updated });
                 }}
                 className="w-16 px-2.5 py-1.5 border border-gray-100 bg-white rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#1a73e8]"

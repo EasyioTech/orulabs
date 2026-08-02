@@ -52,8 +52,8 @@ export function MonacoLiveEditor({
       
       console.log = originalConsoleLog;
       setOutput(logs.join('\n') || "Execution finished with no output.");
-    } catch (e: any) {
-      setOutput(`Error: ${e.message}`);
+    } catch (e) {
+      setOutput(`Error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setIsExecuting(false);
     }

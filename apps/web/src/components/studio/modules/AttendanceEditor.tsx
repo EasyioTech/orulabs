@@ -1,10 +1,9 @@
-import React, { useState } from "react";
-import { ChevronUp, ChevronDown, Trash2, Plus, X, ToggleLeft, ToggleRight, LayoutTemplate, ListChecks, CheckCircle2 } from "lucide-react";
+import { Plus, X, ToggleLeft, ToggleRight, CheckCircle2 } from "lucide-react";
 import { cn } from "@oruclass/utils";
-import type { TrainingModule, ModuleConfig, FormField, FormFieldType, AttendanceField } from "@oruclass/types";
+import type { TrainingModule, ModuleConfig, AttendanceField } from "@oruclass/types";
 
-export function AttendanceEditor({ module, config, onChange }: { module: TrainingModule; config: any; onChange: (c: any) => void }) {
-  const fields = (config.attendanceFields as AttendanceField[]) ?? [];
+export function AttendanceEditor({ config, onChange }: { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void }) {
+  const fields = config.attendanceFields ?? [];
     const addField = () =>
       onChange({
         ...config,
@@ -14,11 +13,11 @@ export function AttendanceEditor({ module, config, onChange }: { module: Trainin
         ],
       });
     const updateField = (i: number, patch: Partial<AttendanceField>) => {
-      const updated = fields.map((f: any, j: number) => (j === i ? { ...f, ...patch } : f));
+      const updated = fields.map((f, j) => (j === i ? { ...f, ...patch } : f));
       onChange({ ...config, attendanceFields: updated });
     };
     const removeField = (i: number) =>
-      onChange({ ...config, attendanceFields: fields.filter((_: any, j: number) => j !== i) });
+      onChange({ ...config, attendanceFields: fields.filter((_, j) => j !== i) });
 
     return (
       <div className="space-y-3 mt-4">
@@ -49,7 +48,7 @@ export function AttendanceEditor({ module, config, onChange }: { module: Trainin
           </div>
         )}
 
-        {fields.map((field: any, i: number) => (
+        {fields.map((field, i) => (
           <div key={field.id} className="bg-gray-50 rounded border border-gray-100 p-3 space-y-2">
             <div className="flex items-center gap-2">
               <input

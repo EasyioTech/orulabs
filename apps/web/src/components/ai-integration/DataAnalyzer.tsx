@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Upload, FileText, Loader2, Play, Activity } from "lucide-react";
 import { cn } from "@oruclass/utils";
+import type { AnalyzedData } from "./types";
 
-export function DataAnalyzer({ onAnalysisComplete }: { onAnalysisComplete: (data: any) => void }) {
+export function DataAnalyzer({ onAnalysisComplete }: { onAnalysisComplete: (data: AnalyzedData) => void }) {
   const [dataInput, setDataInput] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -14,7 +15,7 @@ export function DataAnalyzer({ onAnalysisComplete }: { onAnalysisComplete: (data
     setIsAnalyzing(true);
     
     setTimeout(() => {
-      const mockResult = {
+      const mockResult: AnalyzedData = {
         summary: "Analysis complete. Identified positive growth vectors across core operational metrics in the last 7 periods.",
         metrics: [
           { label: "Total Volume", value: "24,592", change: "+12%" },

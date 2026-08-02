@@ -1521,7 +1521,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
     createDay.mutate(
       { dayNumber: newDayNumber, title: `Day ${newDayNumber}`, date },
       {
-        onSuccess: (res: any) => {
+        onSuccess: (res) => {
           const newDay = res.data;
           if (newDay?.id) setActiveTab(newDay.id);
         },

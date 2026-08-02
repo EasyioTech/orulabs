@@ -3,7 +3,7 @@ import { ChevronUp, ChevronDown, Trash2, Plus, X, ToggleLeft, ToggleRight, Layou
 import { cn } from "@oruclass/utils";
 import type { TrainingModule, ModuleConfig, FormField, FormFieldType } from "@oruclass/types";
 
-export function CustomEditor({ module, config, onChange }: { module: TrainingModule; config: any; onChange: (c: any) => void }) {
+export function CustomEditor({ module, config, onChange }: { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void }) {
   const PRESET_COLORS = ["#fef9c3", "#dcfce7", "#dbeafe", "#fce7f3", "#ede9fe"];
     return (
       <div className="mt-4">

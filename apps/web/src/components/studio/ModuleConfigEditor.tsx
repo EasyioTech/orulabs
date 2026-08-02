@@ -18,7 +18,9 @@ import { CodeEditor } from "./modules/CodeEditor";
 import { DocumentEditor } from "./modules/DocumentEditor";
 
 
-const registry: Record<string, React.FC<any>> = {
+type EditorProps = { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void };
+
+const registry: Record<string, React.FC<EditorProps>> = {
   "quiz": QuizEditor,
   "reflection": ReflectionEditor,
   "matrix": MatrixEditor,

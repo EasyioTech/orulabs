@@ -36,6 +36,11 @@ import type { AppEnv } from "./types/hono";
 
 const PORT = Number(process.env.PORT ?? 3001);
 const ALLOWED_ORIGIN = process.env.WEB_URL ?? "http://localhost:3000";
+// Single source of truth for cross-origin access (shared by HTTP + Socket.IO CORS).
+const ALLOWED_ORIGINS = [ALLOWED_ORIGIN, "https://orulabs.in", "https://www.orulabs.in"];
+/** Returns the origin to echo back, or the primary origin as a safe default. */
+const resolveOrigin = (origin?: string | null): string =>
+  origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGIN;
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES ?? 10 * 1024 * 1024); // 10MB
 
 // ─── Hono App ─────────────────────────────────────────────────────────────────
@@ -46,13 +51,8 @@ app.use(
   "*",
   cors({
     origin: (origin) => {
-      if (!origin || process.env.NODE_ENV !== "production") return origin || "http://localhost:3000";
-      const allowedOrigins = [
-        "https://orulabs.in",
-        "https://www.orulabs.in"
-      ];
-      if (allowedOrigins.includes(origin)) return origin;
-      return ALLOWED_ORIGIN;
+      if (!origin || process.env.NODE_ENV !== "production") return origin || ALLOWED_ORIGIN;
+      return resolveOrigin(origin);
     },
     allowHeaders: ["Content-Type", "Authorization", "X-Workspace-ID"],
     // Required so the browser sends/receives the httpOnly refresh-token cookie.
@@ -175,12 +175,7 @@ export const io = new SocketIOServer<
   cors: {
     origin: (origin, callback) => {
       if (!origin || process.env.NODE_ENV !== "production") return callback(null, true);
-      const allowedOrigins = [
-        "https://orulabs.in",
-        "https://www.orulabs.in"
-      ];
-      if (allowedOrigins.includes(origin)) return callback(null, origin);
-      callback(null, ALLOWED_ORIGIN);
+      callback(null, resolveOrigin(origin));
     },
   },
   pingTimeout: 20000,

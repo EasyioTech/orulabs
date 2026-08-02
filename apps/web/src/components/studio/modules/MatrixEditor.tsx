@@ -1,9 +1,7 @@
-import React, { useState } from "react";
-import { ChevronUp, ChevronDown, Trash2, Plus, X, ToggleLeft, ToggleRight, LayoutTemplate, ListChecks, CheckCircle2 } from "lucide-react";
-import { cn } from "@oruclass/utils";
-import type { TrainingModule, ModuleConfig, FormField, FormFieldType } from "@oruclass/types";
+import { Plus, X } from "lucide-react";
+import type { TrainingModule, ModuleConfig } from "@oruclass/types";
 
-export function MatrixEditor({ module, config, onChange }: { module: TrainingModule; config: any; onChange: (c: any) => void }) {
+export function MatrixEditor({ config, onChange }: { module: TrainingModule; config: ModuleConfig; onChange: (c: ModuleConfig) => void }) {
   const rows = config.rows ?? ["Row 1"];
     const cols = config.columns ?? ["Col 1"];
     return (
@@ -19,18 +17,18 @@ export function MatrixEditor({ module, config, onChange }: { module: TrainingMod
             </button>
           </div>
           <div className="space-y-1.5">
-            {rows.map((r: any, i: number) => (
+            {rows.map((r, i) => (
               <div key={i} className="flex gap-1.5">
                 <input
                   value={r}
                   onChange={(e) => {
-                    const updated = rows.map((x: any, j: number) => (j === i ? e.target.value : x));
+                    const updated = rows.map((x, j) => (j === i ? e.target.value : x));
                     onChange({ ...config, rows: updated });
                   }}
                   className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                 />
                 <button
-                  onClick={() => onChange({ ...config, rows: rows.filter((_: any, j: number) => j !== i) })}
+                  onClick={() => onChange({ ...config, rows: rows.filter((_, j) => j !== i) })}
                   className="text-gray-300 hover:text-red-500 transition-colors"
                 >
                   <X size={14} />
@@ -50,18 +48,18 @@ export function MatrixEditor({ module, config, onChange }: { module: TrainingMod
             </button>
           </div>
           <div className="space-y-1.5">
-            {cols.map((c: any, i: number) => (
+            {cols.map((c, i) => (
               <div key={i} className="flex gap-1.5">
                 <input
                   value={c}
                   onChange={(e) => {
-                    const updated = cols.map((x: any, j: number) => (j === i ? e.target.value : x));
+                    const updated = cols.map((x, j) => (j === i ? e.target.value : x));
                     onChange({ ...config, columns: updated });
                   }}
                   className="flex-1 px-3 py-2 bg-[#f1f3f4] border-b border-[#80868b] focus:border-b-2 focus:border-[#1a73e8] hover:bg-[#e8eaed] rounded-t-md text-xs outline-none transition-colors"
                 />
                 <button
-                  onClick={() => onChange({ ...config, columns: cols.filter((_: any, j: number) => j !== i) })}
+                  onClick={() => onChange({ ...config, columns: cols.filter((_, j) => j !== i) })}
                   className="text-gray-300 hover:text-red-500 transition-colors"
                 >
                   <X size={14} />

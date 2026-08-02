@@ -28,6 +28,16 @@ import { jsPDF } from "jspdf";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#f59e0b", "#3b82f6"];
 
+interface ModuleInsights {
+  averageScore?: number;
+  maxPossible?: number;
+  sentimentScore?: number;
+  questionStats?: Record<string, { text?: string; correct?: number; incorrect?: number }>;
+  distribution?: Record<string, number>;
+  optionsMap?: Record<string, string>;
+  topWords?: { text: string; value: number }[];
+}
+
 interface ModuleStat {
   moduleId: string;
   title: string;
@@ -36,7 +46,7 @@ interface ModuleStat {
   participantCount: number;
   completionRate: number;
   dayId?: string | null;
-  insights?: any;
+  insights?: ModuleInsights;
 }
 
 interface AnalyticsData {
@@ -47,7 +57,7 @@ interface AnalyticsData {
 }
 
 // Sparkline component for KPI cards
-const Sparkline = ({ data, color }: { data: any[]; color: string }) => (
+const Sparkline = ({ data, color }: { data: { value: number }[]; color: string }) => (
   <div className="h-12 w-full mt-2 opacity-60 group-hover:opacity-100 transition-opacity duration-300">
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data}>
@@ -405,6 +415,8 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
             const isWordCloud = m.moduleType === "wordcloud";
             const isReflection = m.moduleType === "reflection";
             const isQna = m.moduleType === "qna";
+            const insights = m.insights;
+            if (!insights) return null;
 
             return (
               <motion.div
@@ -430,19 +442,19 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="text-center bg-slate-50 rounded-2xl p-4 flex-1 mr-2">
-                        <p className="text-3xl font-black text-slate-900">{m.insights.averageScore}</p>
+                        <p className="text-3xl font-black text-slate-900">{insights.averageScore}</p>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Avg Score</p>
                       </div>
                       <div className="text-center bg-slate-50 rounded-2xl p-4 flex-1 ml-2">
-                        <p className="text-3xl font-black text-slate-900">{m.insights.maxPossible}</p>
+                        <p className="text-3xl font-black text-slate-900">{insights.maxPossible}</p>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Max Score</p>
                       </div>
                     </div>
-                    {m.insights.questionStats && Object.keys(m.insights.questionStats).length > 0 && (
+                    {insights.questionStats && Object.keys(insights.questionStats).length > 0 && (
                       <div className="mt-4">
                         <p className="text-xs font-bold text-slate-500 mb-2">Question Performance</p>
                         <div className="space-y-2">
-                          {Object.entries(m.insights.questionStats as Record<string, any>).map(([qId, stat]) => (
+                          {Object.entries(insights.questionStats).map(([qId, stat]) => (
                             <div key={qId} className="flex items-center gap-3">
                               <div className="flex-1 truncate text-sm font-semibold text-slate-700">{stat.text || "Question"}</div>
                               <div className="flex items-center gap-2 text-xs font-bold">
@@ -462,8 +474,8 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={Object.entries(m.insights.distribution || {}).map(([key, val]) => ({
-                            name: m.insights.optionsMap?.[key] || key,
+                          data={Object.entries(insights.distribution || {}).map(([key, val]) => ({
+                            name: insights.optionsMap?.[key] || key,
                             value: val
                           }))}
                           cx="50%"
@@ -473,7 +485,7 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
                           paddingAngle={5}
                           dataKey="value"
                         >
-                          {Object.keys(m.insights.distribution || {}).map((_, idx) => (
+                          {Object.keys(insights.distribution || {}).map((_, idx) => (
                             <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
                           ))}
                         </Pie>
@@ -487,7 +499,7 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
                 {isPulse && (
                   <div className="h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={Object.entries(m.insights.distribution || {}).map(([key, val]) => ({ name: key, count: val }))}>
+                      <BarChart data={Object.entries(insights.distribution || {}).map(([key, val]) => ({ name: key, count: val }))}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis dataKey="name" tick={{ fontSize: 24 }} axisLine={false} tickLine={false} />
                         <Tooltip cursor={{ fill: "#f8fafc" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontWeight: 600 }} />
@@ -499,7 +511,7 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
 
                 {isWordCloud && (
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {m.insights.topWords?.map((w: any, idx: number) => (
+                    {insights.topWords?.map((w, idx) => (
                       <span 
                         key={idx} 
                         className="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold shadow-sm inline-flex items-center"
@@ -511,25 +523,25 @@ export function AnalyticsDashboard({ trainingId }: { trainingId: string }) {
                   </div>
                 )}
 
-                {(isReflection || isQna) && m.insights?.sentimentScore !== undefined && (
+                {(isReflection || isQna) && insights.sentimentScore !== undefined && (
                   <div>
                     <div className="flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-6 mb-4">
                       <p className="text-4xl font-black text-slate-900">
-                        {m.insights.sentimentScore > 0 ? "😊" : m.insights.sentimentScore < 0 ? "😔" : "😐"}
+                        {insights.sentimentScore > 0 ? "😊" : insights.sentimentScore < 0 ? "😔" : "😐"}
                       </p>
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Overall Tone</p>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="bg-emerald-50 rounded-xl py-2">
-                        <p className="text-emerald-600 font-black">{m.insights.distribution?.Positive || 0}</p>
+                        <p className="text-emerald-600 font-black">{insights.distribution?.Positive || 0}</p>
                         <p className="text-[10px] font-bold text-emerald-600 uppercase mt-0.5">Pos</p>
                       </div>
                       <div className="bg-slate-100 rounded-xl py-2">
-                        <p className="text-slate-600 font-black">{m.insights.distribution?.Neutral || 0}</p>
+                        <p className="text-slate-600 font-black">{insights.distribution?.Neutral || 0}</p>
                         <p className="text-[10px] font-bold text-slate-600 uppercase mt-0.5">Neu</p>
                       </div>
                       <div className="bg-rose-50 rounded-xl py-2">
-                        <p className="text-rose-600 font-black">{m.insights.distribution?.Negative || 0}</p>
+                        <p className="text-rose-600 font-black">{insights.distribution?.Negative || 0}</p>
                         <p className="text-[10px] font-bold text-rose-600 uppercase mt-0.5">Neg</p>
                       </div>
                     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { safeReturnTo } from "@/lib/safe-redirect";
 
 export function AuthGuard({
   children,
@@ -49,7 +50,8 @@ export function AuthGuard({
     if (mounted && !isPending && isAuthenticated && user && !emailVerified && user.authProvider !== "guest") {
       let intended: string | null = null;
       try { intended = localStorage.getItem("oru_return"); } catch {}
-      const returnTo = intended ?? (pathname.startsWith("/participant") ? "/participant" : pathname);
+      const fallback = pathname.startsWith("/participant") ? "/participant" : pathname;
+      const returnTo = safeReturnTo(intended, fallback);
       router.replace(`/verify-email?email=${encodeURIComponent(user.email)}&returnTo=${encodeURIComponent(returnTo)}`);
     }
   }, [mounted, isPending, isAuthenticated, user, emailVerified, router, pathname]);

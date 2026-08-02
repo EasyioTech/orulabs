@@ -1,6 +1,7 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type UseFormRegisterReturn, type Resolver } from "react-hook-form";
+import type { InputHTMLAttributes, SelectHTMLAttributes } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateTrainingSchema } from "@oruclass/validators";
 import { useRouter } from "next/navigation";
@@ -33,7 +34,13 @@ const TYPES: { value: string; label: string }[] = [
   { value: "hybrid", label: "Hybrid" },
 ];
 
-const MaterialInput = ({ label, register, error, type = "text", ...props }: any) => (
+type MaterialInputProps = InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  register?: UseFormRegisterReturn;
+  error?: string;
+};
+
+const MaterialInput = ({ label, register, error, type = "text", ...props }: MaterialInputProps) => (
   <div className="relative group">
     <input
       type={type}
@@ -56,7 +63,14 @@ const MaterialInput = ({ label, register, error, type = "text", ...props }: any)
   </div>
 );
 
-const MaterialSelect = ({ label, register, error, options, ...props }: any) => (
+type MaterialSelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+  label: string;
+  register?: UseFormRegisterReturn;
+  error?: string;
+  options: { value: string; label: string }[];
+};
+
+const MaterialSelect = ({ label, register, error, options, ...props }: MaterialSelectProps) => (
   <div className="relative group">
     <select
       {...register}
@@ -66,7 +80,7 @@ const MaterialSelect = ({ label, register, error, options, ...props }: any) => (
         error ? "border-red-500 focus:border-red-500" : "border-gray-400 focus:border-[#1a73e8]"
       )}
     >
-      {options.map((o: any) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
     <label className={cn(
       "absolute left-4 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-[15px] duration-150 peer-focus:text-[#1a73e8] pointer-events-none",
@@ -93,7 +107,7 @@ export function CreateTrainingForm({ onSuccess }: Props = {}) {
     control,
     formState: { errors },
   } = useForm<FormData>({ 
-    resolver: zodResolver(CreateTrainingSchema) as any,
+    resolver: zodResolver(CreateTrainingSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       type: "in_person",
     }
@@ -117,9 +131,7 @@ export function CreateTrainingForm({ onSuccess }: Props = {}) {
   const duration = calculateDuration();
 
   const onSubmit = async (data: FormData) => {
-    console.log("Submitting CreateTraining form data:", data);
-    
-    // Add date formatting to convert datetime-local (e.g. 2026-06-01T12:00) 
+    // Add date formatting to convert datetime-local (e.g. 2026-06-01T12:00)
     // to ISO string (e.g. 2026-06-01T12:00:00Z) expected by datetime validator
     const payload = {
       ...data,

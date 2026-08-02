@@ -8,6 +8,24 @@ import {
 } from "../db/schema";
 import { eq, inArray } from "drizzle-orm";
 import ExcelJS from "exceljs";
+import type { ModuleConfig, QuizQuestion } from "@oruclass/types";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+import Sentiment from "sentiment";
+
+/** Shape of the jsonb `responseData` column across module types (all fields optional). */
+type ResponseData = {
+  emoji?: string;
+  selected?: string[];
+  words?: string[];
+  answers?: Record<string, string>;
+  text?: string;
+  question?: string;
+  questions?: string[];
+};
+
+type ModuleInsights = Record<string, unknown> | null;
+
+const sentiment = new Sentiment();
 
 export async function getTrainingAnalytics(trainingId: string) {
   const [modules, participants] = await Promise.all([
@@ -22,14 +40,14 @@ export async function getTrainingAnalytics(trainingId: string) {
 
   const moduleStats = modules.map((mod) => {
     const responses = responseRows.filter((r) => r.moduleId === mod.id);
-    const config = mod.config as any;
-    
-    let insights: any = null;
-    
+    const config = mod.config as ModuleConfig;
+
+    let insights: ModuleInsights = null;
+
     if (mod.moduleType === "pulse") {
       const distribution: Record<string, number> = {};
       responses.forEach((r) => {
-        const data = r.responseData as any;
+        const data = r.responseData as ResponseData;
         if (data?.emoji) {
           distribution[data.emoji] = (distribution[data.emoji] || 0) + 1;
         }
@@ -38,41 +56,36 @@ export async function getTrainingAnalytics(trainingId: string) {
     } else if (mod.moduleType === "poll") {
       const distribution: Record<string, number> = {};
       responses.forEach((r) => {
-        const data = r.responseData as any;
+        const data = r.responseData as ResponseData;
         if (Array.isArray(data?.selected)) {
-          data.selected.forEach((opt: string) => {
+          data.selected.forEach((opt) => {
             distribution[opt] = (distribution[opt] || 0) + 1;
           });
         }
       });
-      // Try to map option IDs to text if config is available
+      // Map option index/text to display text if config is available.
       const optionsMap: Record<string, string> = {};
-      if (Array.isArray(config?.pollOptions)) {
-        config.pollOptions.forEach((opt: any, idx: number) => {
-          // Sometimes options are strings, sometimes objects
-          if (typeof opt === 'string') {
-            optionsMap[`opt_${idx}`] = opt;
-            optionsMap[opt] = opt;
-          }
-        });
-      }
+      (config.pollOptions ?? []).forEach((opt, idx) => {
+        optionsMap[`opt_${idx}`] = opt;
+        optionsMap[opt] = opt;
+      });
       insights = { distribution, optionsMap };
     } else if (mod.moduleType === "quiz") {
       let totalScore = 0;
       const scores: number[] = [];
-      const questions = config?.questions || [];
+      const questions: QuizQuestion[] = config.questions ?? [];
       const qStats: Record<string, { correct: number; incorrect: number; text: string }> = {};
-      
-      questions.forEach((q: any) => {
+
+      questions.forEach((q) => {
         qStats[q.id] = { correct: 0, incorrect: 0, text: q.text };
       });
 
       responses.forEach((r) => {
-        const data = r.responseData as any;
-        const answers = data?.answers || {};
+        const data = r.responseData as ResponseData;
+        const answers = data?.answers ?? {};
         let score = 0;
-        
-        questions.forEach((q: any) => {
+
+        questions.forEach((q) => {
           if (q.type === "multiple_choice" || q.type === "true_false") {
             if (answers[q.id] === q.correctAnswer) {
               score++;
@@ -94,9 +107,9 @@ export async function getTrainingAnalytics(trainingId: string) {
     } else if (mod.moduleType === "wordcloud") {
       const wordCounts: Record<string, number> = {};
       responses.forEach((r) => {
-        const data = r.responseData as any;
+        const data = r.responseData as ResponseData;
         if (Array.isArray(data?.words)) {
-          data.words.forEach((w: string) => {
+          data.words.forEach((w) => {
             const word = w.trim().toLowerCase();
             if (word) {
               wordCounts[word] = (wordCounts[word] || 0) + 1;
@@ -119,30 +132,23 @@ export async function getTrainingAnalytics(trainingId: string) {
       let negative = 0;
       
       responses.forEach((r) => {
-        const data = r.responseData as any;
+        const data = r.responseData as ResponseData;
         let textToAnalyze = "";
-        
+
         if (mod.moduleType === "reflection" && typeof data?.text === "string") {
           textToAnalyze = data.text;
         } else if (mod.moduleType === "qna") {
           if (typeof data?.question === "string") textToAnalyze = data.question;
           else if (Array.isArray(data?.questions)) textToAnalyze = data.questions.join(" ");
         }
-        
+
         if (textToAnalyze.trim().length > 0) {
-          try {
-            // Lazy load sentiment to avoid top-level issues if package isn't perfectly installed
-            const Sentiment = require("sentiment");
-            const analyzer = new Sentiment();
-            const result = analyzer.analyze(textToAnalyze);
-            totalScore += result.comparative;
-            count++;
-            if (result.comparative > 0.1) positive++;
-            else if (result.comparative < -0.1) negative++;
-            else neutral++;
-          } catch (e) {
-            console.error("Sentiment analysis error", e);
-          }
+          const result = sentiment.analyze(textToAnalyze);
+          totalScore += result.comparative;
+          count++;
+          if (result.comparative > 0.1) positive++;
+          else if (result.comparative < -0.1) negative++;
+          else neutral++;
         }
       });
       

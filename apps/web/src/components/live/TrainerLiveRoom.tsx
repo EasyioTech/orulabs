@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { useLiveSessionStore } from "@/store/liveSession";
 import { useSocketSession } from "@/hooks/useSocket";
 import type { TrainingRole } from "@oruclass/types";
-import { useTraining, useMyTrainingRole } from "@/hooks/useTrainings";
+import { useTraining, useMyTrainingRole, useUpdateTrainingStatus } from "@/hooks/useTrainings";
 import { useDays } from "@/hooks/useDays";
 import { ParticipantGrid } from "./ParticipantGrid";
 import { ControlPanel } from "./ControlPanel";
@@ -73,6 +73,7 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
   const { data: training } = useTraining(activeWorkspaceId, trainingId);
   const { data: days = [] } = useDays(activeWorkspaceId, trainingId);
   const role = useMyTrainingRole(activeWorkspaceId, trainingId);
+  const updateStatus = useUpdateTrainingStatus(activeWorkspaceId, trainingId);
 
   // Day-wise go-live: ?dayId scopes the session to one day's modules.
   // "all" (or absent for single-day trainings) runs the whole training.
@@ -443,9 +444,10 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
                 </button>
                 <button
                   onClick={() => {
-                    const nextState = !useLiveSessionStore.getState().isPaused;
-                    socket?.emit(nextState ? "trainer:pause_room" : "trainer:unpause_room", { trainingId });
+                    const nextPaused = !useLiveSessionStore.getState().isPaused;
+                    updateStatus.mutate(nextPaused ? "paused" : "live");
                   }}
+                  disabled={updateStatus.isPending}
                   className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
                     useLiveSessionStore.getState().isPaused ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200"

@@ -2,24 +2,29 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import axios from "axios";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/store/auth";
 import { setTokens } from "@/lib/token-storage";
+import { safeReturnTo } from "@/lib/safe-redirect";
 import { CheckCircle2, Mail, RefreshCw, Loader2, GraduationCap } from "lucide-react";
 import Link from "next/link";
+
+const apiError = (err: unknown, fallback: string) =>
+  (axios.isAxiosError(err) && err.response?.data?.error) || fallback;
 
 function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const email = searchParams.get("email");
-  const [returnTo, setReturnTo] = useState(searchParams.get("returnTo") ?? "/participant");
+  const [returnTo, setReturnTo] = useState(safeReturnTo(searchParams.get("returnTo"), "/participant"));
 
   useEffect(() => {
     if (searchParams.get("returnTo")) return;
     try {
       const stored = localStorage.getItem("oru_return");
-      if (stored) setReturnTo(stored);
+      if (stored) setReturnTo(safeReturnTo(stored, "/participant"));
     } catch {}
   }, [searchParams]);
 
@@ -31,15 +36,17 @@ function VerifyEmailContent() {
   const [resent, setResent] = useState(false);
   const [code, setCode] = useState("");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const processSuccess = (data: any) => {
+  const processSuccess = (data: {
+    accessToken?: string;
+    user?: { id: string; name: string; email: string; avatarUrl?: string | null; isAnonymous?: boolean };
+  }) => {
     if (data.accessToken) setTokens(data.accessToken);
     if (data.user) {
       setUser({
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
-        avatarUrl: data.user.avatarUrl,
+        avatarUrl: data.user.avatarUrl ?? null,
         authProvider: data.user.isAnonymous ? "guest" : "email",
       });
     }
@@ -51,8 +58,7 @@ function VerifyEmailContent() {
     if (!token) return;
     apiClient.post("/api/auth/verify-email", { token })
       .then(({ data }) => processSuccess(data))
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((err) => setError(err.response?.data?.error || "Verification failed. The link may have expired."))
+      .catch((err) => setError(apiError(err, "Verification failed. The link may have expired.")))
       .finally(() => setVerifying(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -75,9 +81,8 @@ function VerifyEmailContent() {
     try {
       const { data } = await apiClient.post("/api/auth/verify-email", { code, email });
       processSuccess(data);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Verification failed. Please check your code.");
+    } catch (err) {
+      setError(apiError(err, "Verification failed. Please check your code."));
     } finally {
       setVerifying(false);
     }

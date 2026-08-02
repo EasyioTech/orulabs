@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { safeReturnTo } from "@/lib/safe-redirect";
 import { GraduationCap } from "lucide-react";
 import Link from "next/link";
 
@@ -14,7 +15,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     if (!isPending && isAuthenticated && (emailVerified || user?.authProvider === "guest")) {
       let dest = "/participant";
       if (user?.authProvider !== "guest") {
-        try { dest = localStorage.getItem("oru_return") ?? dest; } catch {}
+        try { dest = safeReturnTo(localStorage.getItem("oru_return"), dest); } catch {}
       }
       router.replace(dest);
     }

@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import { Tldraw, useEditor, getSnapshot, loadSnapshot } from "tldraw";
+import { Tldraw, getSnapshot, loadSnapshot, type Editor, type TLRecord, type HistoryEntry } from "tldraw";
 import "tldraw/tldraw.css";
 import { cn } from "@oruclass/utils";
 
+export type WhiteboardSnapshot = ReturnType<typeof getSnapshot>;
+
 interface AdvancedWhiteboardProps {
-  snapshot?: any;
-  onChange?: (snapshot: any) => void;
+  snapshot?: WhiteboardSnapshot | null;
+  onChange?: (snapshot: WhiteboardSnapshot) => void;
   readonly?: boolean;
   className?: string;
 }
@@ -19,18 +21,18 @@ export function AdvancedWhiteboard({ snapshot, onChange, readonly, className }: 
     return undefined; // Let tldraw create its default store
   });
 
-  const handleMount = useCallback((editor: any) => {
+  const handleMount = useCallback((editor: Editor) => {
     if (snapshot && Object.keys(snapshot).length > 0) {
       loadSnapshot(editor.store, snapshot);
     }
-    
+
     if (readonly) {
       editor.updateInstanceState({ isReadonly: true });
     }
 
     if (onChange && !readonly) {
       let timeoutId: NodeJS.Timeout;
-      editor.store.listen((entry: any) => {
+      editor.store.listen((entry: HistoryEntry<TLRecord>) => {
         // Only sync if the change comes from the user (not remote) and affects the document
         if (entry.source !== 'user') return;
         

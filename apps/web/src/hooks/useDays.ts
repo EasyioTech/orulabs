@@ -22,7 +22,7 @@ export function useCreateDay(workspaceId: string, trainingId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: { dayNumber: number; title: string; date?: string; description?: string }) =>
-      apiClient.post(
+      apiClient.post<TrainingDay>(
         `/api/workspaces/${workspaceId}/trainings/${trainingId}/days`,
         data,
         { headers: { "X-Workspace-ID": workspaceId } },

@@ -216,6 +216,7 @@ export interface SubmissionEntry {
 
 export type ResponseData =
   | { type: "quiz"; answers: Record<string, string> }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tldraw snapshot; types pkg can't depend on tldraw
   | { type: "whiteboard"; snapshot: any }
   | { type: "reflection"; text: string; comments?: ReflectionComment[] }
   | { type: "matrix"; cells: Record<string, string> }

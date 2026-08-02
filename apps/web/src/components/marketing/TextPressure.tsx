@@ -13,15 +13,13 @@ const getAttr = (distance: number, maxDist: number, minVal: number, maxVal: numb
   return Math.max(minVal, val + minVal);
 };
 
-const debounce = (func: Function, delay: number) => {
+function debounce<T extends unknown[]>(func: (...args: T) => void, delay: number) {
   let timeoutId: ReturnType<typeof setTimeout>;
-  return (...args: any[]) => {
+  return (...args: T) => {
     clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(null, args);
-    }, delay);
+    timeoutId = setTimeout(() => func(...args), delay);
   };
-};
+}
 
 interface TextPressureProps {
   text?: string;

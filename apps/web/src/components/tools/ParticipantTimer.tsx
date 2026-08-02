@@ -26,8 +26,8 @@ export function ParticipantTimer({ module }: Props) {
       setRunning(data.running);
       setDuration(data.duration);
     };
-    socket.on("timer:sync" as any, handler);
-    return () => { socket.off("timer:sync" as any, handler); };
+    socket.on("timer:sync", handler);
+    return () => { socket.off("timer:sync", handler); };
   }, [socket, module.id]);
 
   // Local countdown when running

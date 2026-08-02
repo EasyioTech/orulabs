@@ -3,24 +3,24 @@
 import { useState, useEffect, useRef } from "react";
 import { useParticipantScratchpad, useUpdateParticipantScratchpad } from "@/hooks/useParticipantScratchpad";
 import { X, Save, CheckCircle2 } from "lucide-react";
-import { AdvancedWhiteboard } from "../tools/AdvancedWhiteboard";
+import { AdvancedWhiteboard, type WhiteboardSnapshot } from "../tools/AdvancedWhiteboard";
 
 export function ParticipantWhiteboardWidget({ trainingId, onClose }: { trainingId: string; onClose: () => void }) {
   const { data: scratchpad, isLoading } = useParticipantScratchpad(trainingId);
   const updateScratchpad = useUpdateParticipantScratchpad(trainingId);
   
-  const [snapshot, setSnapshot] = useState<any>(null);
+  const [snapshot, setSnapshot] = useState<WhiteboardSnapshot | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize from scratchpad
   useEffect(() => {
     if (scratchpad?.personalWhiteboard && scratchpad.personalWhiteboard.snapshot) {
-      setSnapshot(scratchpad.personalWhiteboard.snapshot);
+      setSnapshot(scratchpad.personalWhiteboard.snapshot as WhiteboardSnapshot);
     }
   }, [scratchpad?.personalWhiteboard]);
 
-  const saveSnapshot = (newSnapshot: any) => {
+  const saveSnapshot = (newSnapshot: WhiteboardSnapshot) => {
     setSaveStatus("saving");
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
@@ -37,7 +37,7 @@ export function ParticipantWhiteboardWidget({ trainingId, onClose }: { trainingI
     }, 1000);
   };
 
-  const handleChange = (newSnapshot: any) => {
+  const handleChange = (newSnapshot: WhiteboardSnapshot) => {
     setSnapshot(newSnapshot);
     saveSnapshot(newSnapshot);
   };

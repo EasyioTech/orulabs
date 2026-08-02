@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api-client";
 import { isAxiosError } from "axios";
 import { setTokens } from "@/lib/token-storage";
+import { safeReturnTo } from "@/lib/safe-redirect";
 import { UserCircle2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
@@ -44,7 +45,7 @@ function EmailAuthFormInner({
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const effectiveReturnTo = searchParams.get("returnTo") ?? returnTo;
+  const effectiveReturnTo = safeReturnTo(searchParams.get("returnTo"), returnTo);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

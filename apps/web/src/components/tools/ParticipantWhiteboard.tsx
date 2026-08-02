@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "@/hooks/useSocket";
 import type { TrainingModule } from "@oruclass/types";
-import { AdvancedWhiteboard } from "./AdvancedWhiteboard";
+import { AdvancedWhiteboard, type WhiteboardSnapshot } from "./AdvancedWhiteboard";
 
 interface Props {
   module: TrainingModule;
@@ -12,12 +12,12 @@ interface Props {
 
 export function ParticipantWhiteboard({ module, trainingId }: Props) {
   const socket = useSocket();
-  const [snapshot, setSnapshot] = useState<any>(null);
+  const [snapshot, setSnapshot] = useState<WhiteboardSnapshot | null>(null);
 
   useEffect(() => {
     if (!socket) return;
-    
-    const handleSync = ({ snapshot: newSnapshot }: { snapshot?: any }) => {
+
+    const handleSync = ({ snapshot: newSnapshot }: { snapshot?: WhiteboardSnapshot }) => {
       if (newSnapshot) setSnapshot(newSnapshot);
     };
 
