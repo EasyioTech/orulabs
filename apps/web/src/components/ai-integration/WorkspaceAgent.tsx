@@ -69,11 +69,11 @@ export function WorkspaceAgent({ workspaceId }: { workspaceId: string }) {
   };
 
   return (
-    <div className="rounded border border-gray-300 bg-white shadow-sm max-w-4xl h-[600px] flex flex-col font-sans">
+    <div className="flex flex-col font-sans w-full max-w-4xl h-[600px]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-3 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-gray-100 border border-gray-200">
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-gray-50 border border-gray-200">
             <Cpu className="text-gray-700" size={16} />
           </div>
           <div>
@@ -94,7 +94,7 @@ export function WorkspaceAgent({ workspaceId }: { workspaceId: string }) {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto py-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent pr-4 -mr-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -105,10 +105,10 @@ export function WorkspaceAgent({ workspaceId }: { workspaceId: string }) {
           >
             <div
               className={cn(
-                "relative max-w-[75%] rounded-lg px-4 py-3 text-sm shadow-sm",
+                "relative max-w-[85%] rounded-2xl px-5 py-3.5 text-[15px] shadow-sm border",
                 msg.role === "user"
-                  ? "bg-[#1a73e8] text-white rounded-br-sm"
-                  : "bg-gray-100 text-gray-900 rounded-bl-sm"
+                  ? "bg-[#1a73e8] text-white rounded-br-sm border-transparent"
+                  : "bg-white text-gray-900 rounded-bl-sm border-gray-200"
               )}
             >
               {msg.isExecuting ? (
@@ -124,7 +124,7 @@ export function WorkspaceAgent({ workspaceId }: { workspaceId: string }) {
         ))}
         {isProcessing && !messages.find(m => m.isExecuting) && (
           <div className="flex w-full justify-start animate-in fade-in">
-            <div className="flex gap-1.5 rounded-lg rounded-bl-sm bg-gray-100 px-4 py-4 shadow-sm">
+            <div className="flex gap-1.5 rounded-2xl rounded-bl-sm bg-white border border-gray-200 px-5 py-4 shadow-sm">
               <div className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.3s]" />
               <div className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.15s]" />
               <div className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce" />
@@ -135,7 +135,7 @@ export function WorkspaceAgent({ workspaceId }: { workspaceId: string }) {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 bg-white p-3">
+      <div className="pt-4 flex-shrink-0">
         <form onSubmit={handleSubmit} className="relative flex items-center">
           <input
             type="text"
@@ -143,14 +143,14 @@ export function WorkspaceAgent({ workspaceId }: { workspaceId: string }) {
             onChange={(e) => setInput(e.target.value)}
             disabled={isProcessing}
             placeholder={apiKey ? "Message Workspace Agent..." : "Command the workspace agent (simulated mode)..."}
-            className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] transition-colors disabled:opacity-60"
+            className="w-full bg-white border border-gray-300 rounded-xl px-5 py-3.5 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] transition-all shadow-sm disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={!input.trim() || isProcessing}
-            className="absolute right-2 flex h-8 w-8 items-center justify-center rounded text-[#1a73e8] hover:bg-blue-50 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+            className="absolute right-2 flex h-9 w-9 items-center justify-center rounded-lg text-white bg-[#1a73e8] hover:bg-[#1557b0] disabled:opacity-40 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
           >
-            <Send size={18} />
+            <Send size={16} className={input.trim() && !isProcessing ? "ml-1" : ""} />
           </button>
         </form>
       </div>
