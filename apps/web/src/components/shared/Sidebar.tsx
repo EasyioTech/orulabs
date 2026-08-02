@@ -105,15 +105,17 @@ export function Sidebar() {
         </nav>
 
         {/* Bottom */}
-        <div className="py-3 border-t border-gray-100 flex-shrink-0 flex flex-col gap-1">
+        <div className="py-3 border-t border-gray-100 flex-shrink-0 flex flex-col gap-2">
           {!isPro && hasWorkspace && !isParticipant && (
-            <Link
-              href="/subscription"
-              className="flex items-center gap-5 pl-6 pr-4 py-2.5 rounded-r-full text-[14.5px] font-medium text-[#1967d2] hover:bg-[#e8f0fe] transition-colors mr-4"
-            >
-              <Sparkles size={20} />
-              Upgrade to Pro
-            </Link>
+            <div className="px-4 mt-1 mb-1">
+              <Link
+                href="/subscription"
+                className="flex items-center justify-center gap-2 py-2.5 rounded-full text-[13.5px] font-medium border border-gray-300 text-[#1a73e8] hover:bg-blue-50/50 hover:border-[#1a73e8]/30 transition-all w-full"
+              >
+                <Crown size={16} className="text-[#f9ab00]" />
+                Upgrade to Pro
+              </Link>
+            </div>
           )}
           <Link
             href="/settings"
