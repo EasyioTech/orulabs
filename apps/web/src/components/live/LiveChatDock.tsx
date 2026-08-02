@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { MessageSquare, Send, X, Minimize2, Maximize2, Move } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { useAuthStore } from "@/store/auth";
+import { useLiveSessionStore } from "@/store/liveSession";
 import { cn } from "@oruclass/utils";
 import { playChatSound } from "@/lib/sounds";
 import { format } from "date-fns";
@@ -27,6 +28,7 @@ interface Props {
 export function LiveChatDock({ trainingId, onClose, onUnreadChange, boundsRef }: Props) {
   const socket = useSocket();
   const user = useAuthStore((s) => s.user);
+  const snapshotChat = useLiveSessionStore((s) => s.snapshotChat);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [minimized, setMinimized] = useState(false);
@@ -51,9 +53,45 @@ export function LiveChatDock({ trainingId, onClose, onUnreadChange, boundsRef }:
       }
     };
 
+    // Reconnect replay: the server re-sends recent messages on (re)join. Merge by id so
+    // messages we already have aren't duplicated, then re-sort chronologically.
+    const handleHistory = ({ messages: history }: { messages: ChatMessage[] }) => {
+      setMessages((prev) => {
+        const byId = new Map(prev.map((m) => [m.id, m]));
+        for (const m of history) byId.set(m.id, m);
+        return Array.from(byId.values()).sort(
+          (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime(),
+        );
+      });
+    };
+
     socket.on("chat:message", handleMessage);
-    return () => { socket.off("chat:message", handleMessage); };
+    socket.on("chat:history", handleHistory);
+    return () => {
+      socket.off("chat:message", handleMessage);
+      socket.off("chat:history", handleHistory);
+    };
   }, [socket, user?.id, minimized, onUnreadChange]);
+
+  // Belt-and-suspenders reconnect replay: the REST room-state snapshot carries
+  // recentChat, which lands here via the store. This covers reconnect paths where
+  // the socket `chat:history` event never fires (e.g. no fresh participant:join).
+  // Same merge-by-id + chronological sort keeps it idempotent with the live stream.
+  useEffect(() => {
+    if (!snapshotChat || snapshotChat.length === 0) return;
+    setMessages((prev) => {
+      const byId = new Map(prev.map((m) => [m.id, m]));
+      let added = false;
+      for (const m of snapshotChat) {
+        if (!byId.has(m.id)) added = true;
+        byId.set(m.id, m);
+      }
+      if (!added) return prev; // nothing new — avoid a needless re-render
+      return Array.from(byId.values()).sort(
+        (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime(),
+      );
+    });
+  }, [snapshotChat]);
 
   useEffect(() => {
     if (!minimized) {

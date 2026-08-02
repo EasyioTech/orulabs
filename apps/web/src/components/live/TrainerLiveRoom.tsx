@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
-import { useAuthStore } from "@/store/auth";
 import { useLiveSessionStore } from "@/store/liveSession";
-import { useSocketSession } from "@/hooks/useSocket";
+import { useTrainerLiveSocket } from "@/hooks/useTrainerLiveSocket";
 import type { TrainingRole } from "@oruclass/types";
 import { useTraining, useMyTrainingRole, useUpdateTrainingStatus } from "@/hooks/useTrainings";
 import { useDays } from "@/hooks/useDays";
@@ -23,6 +22,8 @@ import { ModuleStopwatch } from "./ModuleStopwatch";
 import { DraggableVideoDock } from "./DraggableVideoDock";
 import { LiveChatDock } from "./LiveChatDock";
 import { LiveQRDock } from "./LiveQRDock";
+import { TrainerControlBar } from "./TrainerControlBar";
+import { sessionStatusConfig } from "./sessionStatusConfig";
 import { cn } from "@oruclass/utils";
 import { canDo } from "@/lib/permissions";
 import {
@@ -36,15 +37,6 @@ import {
   WifiOff,
   RefreshCw,
   CalendarDays,
-  Video,
-  MessageSquare,
-  Mic,
-  MicOff,
-  Camera,
-  MonitorUp,
-  QrCode,
-  Hand,
-  PhoneOff,
 } from "lucide-react";
 
 type RightTab = "control" | "agenda" | "participants" | "responses";
@@ -60,20 +52,23 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
   const [rightOpen, setRightOpen] = useState(true);
   const [videoOpen, setVideoOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [micMuted, setMicMuted] = useState(false);
-  const [cameraMuted, setCameraMuted] = useState(false);
   const [activeTab, setActiveTab] = useState<RightTab>("control");
-  const boundsRef = useRef<HTMLDivElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
-  const [attentionAlerts, setAttentionAlerts] = useState<{ id: string; message: string }[]>([]);
+  const boundsRef = useRef<HTMLDivElement>(null);
 
-  const user = useAuthStore((s) => s.user);
   const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId) ?? "";
   const { data: training } = useTraining(activeWorkspaceId, trainingId);
   const { data: days = [] } = useDays(activeWorkspaceId, trainingId);
   const role = useMyTrainingRole(activeWorkspaceId, trainingId);
   const updateStatus = useUpdateTrainingStatus(activeWorkspaceId, trainingId);
+
+  const { attentionAlerts } = useTrainerLiveSocket(training);
+
+  const activeModule = useLiveSessionStore((s) => s.activeModule);
+  const participants = useLiveSessionStore((s) => s.participants);
+  const socketStatus = useLiveSessionStore((s) => s.socketStatus);
+  const participantCount = Array.from(participants.values()).filter((p) => p.role === "participant").length;
 
   // Day-wise go-live: ?dayId scopes the session to one day's modules.
   // "all" (or absent for single-day trainings) runs the whole training.
@@ -81,8 +76,7 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const dayParam = searchParams.get("dayId");
-  const selectedDay =
-    dayParam && dayParam !== "all" ? days.find((d) => d.id === dayParam) : null;
+  const selectedDay = dayParam && dayParam !== "all" ? days.find((d) => d.id === dayParam) : null;
 
   const clearDay = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -90,99 +84,6 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
   };
-  const socket = useSocketSession(trainingId);
-  const activeModule = useLiveSessionStore((s) => s.activeModule);
-  const setActiveModule = useLiveSessionStore((s) => s.setActiveModule);
-  const setSessionStats = useLiveSessionStore((s) => s.setSessionStats);
-  const addGrantedPermission = useLiveSessionStore((s) => s.addGrantedPermission);
-  const revokeGrantedPermission = useLiveSessionStore((s) => s.revokeGrantedPermission);
-  const setGrantedPermissions = useLiveSessionStore((s) => s.setGrantedPermissions);
-  const setSessionGrants = useLiveSessionStore((s) => s.setSessionGrants);
-  const addParticipant = useLiveSessionStore((s) => s.addParticipant);
-  const participants = useLiveSessionStore((s) => s.participants);
-  const responseCounts = useLiveSessionStore((s) => s.responseCounts);
-  const socketStatus = useLiveSessionStore((s) => s.socketStatus);
-
-  const participantCount = Array.from(participants.values()).filter((p) => p.role === "participant").length;
-
-  // Fallback sync: if socket event was missed but DB has an active module, restore state
-  useEffect(() => {
-    if (training?.sessionStatus !== "live") return;
-    if (!training?.currentActiveModuleId) return;
-
-    if (!activeModule || activeModule.id !== training.currentActiveModuleId) {
-      const mod = training.modules?.find((m) => m.id === training.currentActiveModuleId);
-      if (mod) setActiveModule(mod);
-    }
-  }, [training?.currentActiveModuleId, training?.sessionStatus, activeModule, training?.modules, setActiveModule]);
-
-  useEffect(() => {
-    if (!user || !trainingId || !socket) return;
-
-    addParticipant({
-      userId: user.id,
-      name: user.name ?? "",
-      role: "trainer",
-      joinedAt: new Date().toISOString(),
-      connectionStatus: "online",
-    });
-
-    const handleConnect = () => {
-      socket.emit("participant:join", { trainingId, role: "trainer" });
-    };
-
-    if (socket.connected && training?.sessionStatus !== "draft" && training?.sessionStatus !== "completed") {
-      handleConnect();
-    }
-
-    socket.on("connect", handleConnect);
-
-    // Handle session submission updates
-    const handleSubmissionUpdate = (data: { submitted: number; totalParticipants: number; liveSessionId: string }) => {
-      setSessionStats({
-        submitted: data.submitted,
-        totalParticipants: data.totalParticipants,
-        completionPct: data.totalParticipants > 0 ? Math.round((data.submitted / data.totalParticipants) * 100) : 0,
-        liveSessionId: data.liveSessionId,
-      });
-    };
-    socket.on("session:submission_update", handleSubmissionUpdate);
-
-    const handleAttentionAlert = (data: { userId: string; userName: string; isFocused: boolean }) => {
-      if (!data.isFocused) {
-        const msg = `${data.userName || 'A participant'} has switched tabs (lost focus).`;
-        const id = Math.random().toString();
-        setAttentionAlerts((prev) => [...prev, { id, message: msg }]);
-        setTimeout(() => {
-          setAttentionAlerts((prev) => prev.filter((a) => a.id !== id));
-        }, 5000);
-      }
-    };
-    socket.on("trainer:attention_alert", handleAttentionAlert);
-
-    const handlePermissionGranted = (data: { permission: "unlock_modules" | "pause_room"; grantedBy: string }) => {
-      addGrantedPermission(data.permission);
-    };
-    const handlePermissionRevoked = (data: { permission: "unlock_modules" | "pause_room" }) => {
-      revokeGrantedPermission(data.permission);
-    };
-    const handleGrantsSnapshot = (data: { myGrants: ("unlock_modules" | "pause_room")[]; allGrants: Record<string, ("unlock_modules" | "pause_room")[]> }) => {
-      setGrantedPermissions(data.myGrants);
-      setSessionGrants(data.allGrants);
-    };
-    socket.on("session:permission_granted", handlePermissionGranted);
-    socket.on("session:permission_revoked", handlePermissionRevoked);
-    socket.on("session:grants_snapshot", handleGrantsSnapshot);
-
-    return () => {
-      socket.off("connect", handleConnect);
-      socket.off("session:submission_update", handleSubmissionUpdate);
-      socket.off("trainer:attention_alert", handleAttentionAlert);
-      socket.off("session:permission_granted", handlePermissionGranted);
-      socket.off("session:permission_revoked", handlePermissionRevoked);
-      socket.off("session:grants_snapshot", handleGrantsSnapshot);
-    };
-  }, [user, trainingId, socket, training?.sessionStatus, setSessionStats]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!training) {
     return (
@@ -195,8 +96,7 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
   // Before opening a multi-day training for joining, make the trainer pick
   // which day to run. Skip once a day (or "all") is chosen, and never block a
   // session that's already past draft.
-  const needsDayPick =
-    training.sessionStatus === "draft" && days.length > 0 && !dayParam;
+  const needsDayPick = training.sessionStatus === "draft" && days.length > 0 && !dayParam;
 
   const renderModuleArea = () => {
     if (training.sessionStatus === "completed") {
@@ -206,9 +106,7 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
       return (
         <SelectDaySlide
           days={days}
-          moduleCountForDay={(dayId) =>
-            training.modules?.filter((m) => m.dayId === dayId).length ?? 0
-          }
+          moduleCountForDay={(dayId) => training.modules?.filter((m) => m.dayId === dayId).length ?? 0}
         />
       );
     }
@@ -221,15 +119,12 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
     return <SelectModuleSlide training={training} isTrainer={true} />;
   };
 
-  const statusConfig = (
-    {
-      live: { label: "Live", dot: "bg-green-500", pill: "bg-green-50 text-green-700 border-green-200" },
-      connecting: { label: "Open", dot: "bg-blue-500", pill: "bg-blue-50 text-blue-700 border-blue-200" },
-      paused: { label: "Paused", dot: "bg-amber-500", pill: "bg-amber-50 text-amber-700 border-amber-200" },
-      draft: { label: "Draft", dot: "bg-gray-400", pill: "bg-gray-50 text-gray-500 border-gray-100" },
-      completed: { label: "Ended", dot: "bg-gray-400", pill: "bg-gray-50 text-gray-500 border-gray-100" },
-    } as Record<string, { label: string; dot: string; pill: string }>
-  )[training.sessionStatus] ?? { label: training.sessionStatus, dot: "bg-gray-400", pill: "bg-gray-50 text-gray-500 border-gray-100" };
+  const status = sessionStatusConfig(training.sessionStatus);
+
+  const togglePause = () => {
+    const nextPaused = !useLiveSessionStore.getState().isPaused;
+    updateStatus.mutate(nextPaused ? "paused" : "live");
+  };
 
   return (
     <div className="flex h-full overflow-hidden bg-gray-50">
@@ -293,14 +188,14 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
               </div>
             )}
 
-            <div className={cn("flex items-center gap-1.5 border rounded-full px-2.5 py-1", statusConfig.pill)}>
+            <div className={cn("flex items-center gap-1.5 border rounded-full px-2.5 py-1", status.pill)}>
               <span className="relative flex h-1.5 w-1.5 shrink-0">
                 {(training.sessionStatus === "live" || training.sessionStatus === "connecting") && (
-                  <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", statusConfig.dot)} />
+                  <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", status.dot)} />
                 )}
-                <span className={cn("relative inline-flex rounded-full h-1.5 w-1.5", statusConfig.dot)} />
+                <span className={cn("relative inline-flex rounded-full h-1.5 w-1.5", status.dot)} />
               </span>
-              <span className="text-[11px] font-semibold">{statusConfig.label}</span>
+              <span className="text-[11px] font-semibold">{status.label}</span>
             </div>
 
             {/* Mobile: toggle right panel */}
@@ -346,14 +241,10 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
               {renderModuleArea()}
             </div>
           </div>
-          
-          {/* Floating Video Conference Dock */}
+
+          {/* Floating docks */}
           {videoOpen && (
-            <DraggableVideoDock
-              trainingId={trainingId}
-              boundsRef={boundsRef}
-              onClose={() => setVideoOpen(false)}
-            />
+            <DraggableVideoDock trainingId={trainingId} boundsRef={boundsRef} onClose={() => setVideoOpen(false)} />
           )}
           {chatOpen && (
             <LiveChatDock
@@ -364,145 +255,31 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
             />
           )}
           {qrOpen && (
-            <LiveQRDock
-              training={training}
-              boundsRef={boundsRef}
-              onClose={() => setQrOpen(false)}
-            />
+            <LiveQRDock training={training} boundsRef={boundsRef} onClose={() => setQrOpen(false)} />
           )}
         </div>
 
-        {/* BOTTOM NAV (Google Meet Style) */}
-        <div className="h-16 border-t border-gray-100 bg-white flex items-center justify-between px-6 flex-shrink-0 z-20 w-full">
-          <div className="w-1/3 min-w-0 flex items-center justify-start">
-            <span className="text-[14px] text-gray-700 truncate block font-medium">
-              {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull; {training.title}
-            </span>
-          </div>
-
-          <div className="w-1/3 min-w-0 flex items-center justify-center gap-3">
-            {training.type !== "in_person" ? (
-              <>
-                <button
-                  onClick={() => {
-                    setMicMuted(v => !v);
-                    alert(`Microphone ${!micMuted ? "muted" : "unmuted"}`);
-                  }}
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
-                    micMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  )}
-                  title="Toggle Microphone"
-                >
-                  {micMuted ? <MicOff size={18} /> : <Mic size={18} />}
-                </button>
-                <button
-                  onClick={() => {
-                    setCameraMuted(v => !v);
-                    alert(`Camera ${!cameraMuted ? "turned off" : "turned on"}`);
-                  }}
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
-                    cameraMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  )}
-                  title="Toggle Camera"
-                >
-                  <Camera size={18} />
-                </button>
-                <button
-                  onClick={() => setVideoOpen(v => !v)}
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
-                    videoOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  )}
-                  title="Toggle Video Panel"
-                >
-                  <MonitorUp size={18} />
-                </button>
-                <button
-                  onClick={() => {
-                    alert("Leaving the call");
-                    router.push(`/dashboard`);
-                  }}
-                  className="w-12 h-10 rounded-[20px] flex items-center justify-center transition-colors bg-red-500 text-white hover:bg-red-600 shadow-sm ml-2"
-                  title="Leave Call"
-                >
-                  <PhoneOff size={18} />
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setQrOpen(v => !v)}
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
-                    qrOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  )}
-                  title="Show Join QR Code"
-                >
-                  <QrCode size={18} />
-                </button>
-                <button
-                  onClick={() => {
-                    const nextPaused = !useLiveSessionStore.getState().isPaused;
-                    updateStatus.mutate(nextPaused ? "paused" : "live");
-                  }}
-                  disabled={updateStatus.isPending}
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm",
-                    useLiveSessionStore.getState().isPaused ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  )}
-                  title={useLiveSessionStore.getState().isPaused ? "Unpause Room" : "Pause Room"}
-                >
-                  <Hand size={18} />
-                </button>
-                <button
-                  onClick={() => setChatOpen(v => !v)}
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors relative shadow-sm",
-                    chatOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  )}
-                  title="Toggle Chat"
-                >
-                  <MessageSquare size={18} />
-                  {chatUnread > 0 && !chatOpen && (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
-                      {chatUnread > 9 ? "9+" : chatUnread}
-                    </span>
-                  )}
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="w-1/3 min-w-0 flex items-center justify-end gap-3">
-            {training.type !== "in_person" && (
-              <button
-                onClick={() => setChatOpen(v => !v)}
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center transition-colors relative",
-                  chatOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-white text-gray-500 hover:bg-gray-100"
-                )}
-                title="Toggle Chat"
-              >
-                <MessageSquare size={18} />
-                {chatUnread > 0 && !chatOpen && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
-                    {chatUnread > 9 ? "9+" : chatUnread}
-                  </span>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
+        <TrainerControlBar
+          training={training}
+          videoOpen={videoOpen}
+          qrOpen={qrOpen}
+          chatOpen={chatOpen}
+          chatUnread={chatUnread}
+          onToggleVideo={() => setVideoOpen((v) => !v)}
+          onToggleQr={() => setQrOpen((v) => !v)}
+          onToggleChat={() => setChatOpen((v) => !v)}
+          onTogglePause={togglePause}
+          pausePending={updateStatus.isPending}
+          onLeave={() => {
+            alert("Leaving the call");
+            router.push(`/dashboard`);
+          }}
+        />
       </div>
 
       {/* Mobile overlay */}
       {rightOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40 md:hidden"
-          onClick={() => setRightOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/20 z-40 md:hidden" onClick={() => setRightOpen(false)} />
       )}
 
       {/* ── RIGHT PANEL ── */}
@@ -510,9 +287,7 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
         className={cn(
           "bg-white border-l border-gray-100 flex flex-col flex-shrink-0 overflow-hidden transition-all duration-300",
           "fixed md:relative inset-y-0 right-0 z-50",
-          rightOpen
-            ? "w-[280px] translate-x-0"
-            : "w-0 md:w-0 translate-x-full md:translate-x-0",
+          rightOpen ? "w-[280px] translate-x-0" : "w-0 md:w-0 translate-x-full md:translate-x-0",
         )}
       >
         {/* Mobile close header */}
@@ -552,10 +327,10 @@ export function TrainerLiveRoom({ trainingId }: { trainingId: string }) {
               userTrainingRole={role as TrainingRole | undefined}
             />
           )}
-          {activeTab === "agenda" && (
-            <AgendaPane trainingId={trainingId} workspaceId={activeWorkspaceId} />
+          {activeTab === "agenda" && <AgendaPane trainingId={trainingId} workspaceId={activeWorkspaceId} />}
+          {activeTab === "participants" && (
+            <ParticipantGrid trainingId={trainingId} workspaceId={training.workspaceId} joinToken={training.joinToken} />
           )}
-          {activeTab === "participants" && <ParticipantGrid trainingId={trainingId} workspaceId={training.workspaceId} joinToken={training.joinToken} />}
           {activeTab === "responses" && <SessionDashboard training={training} />}
         </div>
       </div>
