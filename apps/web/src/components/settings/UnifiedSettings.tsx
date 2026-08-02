@@ -48,34 +48,36 @@ export function UnifiedSettings() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4 h-full flex flex-col md:flex-row gap-8">
-      {/* Left Sidebar (Google-like navigation) */}
-      <div className="w-full md:w-64 flex-shrink-0 space-y-1">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6 px-4">Settings</h1>
+    <div className="max-w-5xl mx-auto py-8 px-4 font-sans">
+      {/* Top Header & Navigation Tabs */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-normal text-gray-900 mb-6 px-1 tracking-tight">Settings</h1>
         
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "w-full flex items-center gap-4 px-4 py-3 rounded-full text-[14px] font-medium transition-colors text-left",
-                isActive 
-                  ? "bg-[#e8f0fe] text-[#1a73e8]" 
-                  : "text-gray-700 hover:bg-gray-100"
-              )}
-            >
-              <Icon size={18} className={isActive ? "text-[#1a73e8]" : "text-gray-500"} strokeWidth={isActive ? 2.5 : 2} />
-              {tab.label}
-            </button>
-          );
-        })}
+        <div className="flex items-center gap-2 border-b border-gray-200">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-3 text-[14px] font-medium transition-colors border-b-2 relative -mb-[1px]",
+                  isActive 
+                    ? "text-[#1a73e8] border-[#1a73e8]" 
+                    : "text-gray-600 border-transparent hover:text-gray-900 hover:bg-gray-50 rounded-t-lg"
+                )}
+              >
+                <Icon size={18} className={isActive ? "text-[#1a73e8]" : "text-gray-500"} strokeWidth={isActive ? 2 : 1.5} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden min-h-[500px]">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
         {activeTab === "profile" && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Header Cover */}
@@ -169,8 +171,7 @@ export function UnifiedSettings() {
 
         {activeTab === "ai" && (
           <div className="p-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">AI Integration</h2>
-            <div className="bg-gray-50 border border-gray-100 rounded-xl p-6">
+            <div>
               {activeWorkspaceId ? (
                 <AIDataAnalysisTab workspaceId={activeWorkspaceId} />
               ) : (
