@@ -10,6 +10,7 @@ import { ScratchpadUpdateSchema, JoinCodeSchema } from "@oruclass/validators";
 import { parseBody } from "../utils/validators";
 import { trainingInWorkspace } from "../utils/workspaceAssets";
 import { sendParticipantJoinedEmail, sendAccountDeletedEmail } from "../services/email.service";
+import { buildRoomStateSnapshot } from "../socket/services/roomState.service";
 
 export const participantsRouter = new Hono<AppEnv>();
 
@@ -96,6 +97,19 @@ participantsRouter.get("/participant/trainings/:id", async (c) => {
   if (!participation) return c.json({ error: "Not found or not participating" }, 404);
 
   return c.json(participation.training);
+});
+
+// GET /participant/trainings/:id/room-state — consolidated snapshot for reconnect
+// recovery. Auth-only (no workspace tenancy) so it serves BOTH trainers and participants;
+// the service verifies the caller is a facilitator or enrolled participant of the training.
+participantsRouter.get("/participant/trainings/:id/room-state", async (c) => {
+  const userId = c.get("userId") as string;
+  const { id } = c.req.param();
+
+  const snapshot = await buildRoomStateSnapshot(id, userId);
+  if (!snapshot) return c.json({ error: "Not found or not a member of this training" }, 404);
+
+  return c.json(snapshot);
 });
 
 // POST /join/code — look up a live training by 6-digit session code.

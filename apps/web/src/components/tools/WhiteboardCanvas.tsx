@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useSocket } from "@/hooks/useSocket";
 import { useAuthStore } from "@/store/auth";
 import type { TrainingModule } from "@oruclass/types";
@@ -15,24 +15,46 @@ export function WhiteboardCanvas({ module, trainingId }: Props) {
   const socket = useSocket();
   const user = useAuthStore((s) => s.user);
   const [snapshot, setSnapshot] = useState<WhiteboardSnapshot | null>(null);
-
-  useEffect(() => {
-    const handleSync = ({ snapshot: newSnapshot }: { snapshot?: WhiteboardSnapshot }) => {
-      if (newSnapshot) setSnapshot(newSnapshot);
-    };
-
-    socket.on("draw:sync", handleSync);
-    return () => {
-      socket.off("draw:sync", handleSync);
-    };
-  }, [socket]);
-
-  const handleChange = useCallback((newSnapshot: WhiteboardSnapshot) => {
-    socket.emit("draw:sync", { moduleId: module.id, trainingId, snapshot: newSnapshot });
-  }, [socket, module.id, trainingId]);
+  const latestSnapshot = useRef<WhiteboardSnapshot | null>(null);
 
   // Guests are QR-join participants; any credentialed (email) user is a trainer.
   const isTrainer = !!user && user.authProvider !== "guest";
+
+  useEffect(() => {
+    const handleSync = ({ snapshot: newSnapshot }: { snapshot?: WhiteboardSnapshot }) => {
+      if (newSnapshot) {
+        latestSnapshot.current = newSnapshot;
+        setSnapshot(newSnapshot);
+      }
+    };
+
+    // Reconnect recovery for the stateless whiteboard relay: the trainer answers a
+    // peer's draw:request with the current canvas; participants ask for it on every
+    // (re)connect instead of waiting for the trainer's next stroke.
+    const handleRequest = () => {
+      if (isTrainer && latestSnapshot.current) {
+        socket.emit("draw:sync", { moduleId: module.id, trainingId, snapshot: latestSnapshot.current });
+      }
+    };
+    const requestBoard = () => {
+      if (!isTrainer) socket.emit("draw:request", { trainingId, moduleId: module.id });
+    };
+
+    socket.on("draw:sync", handleSync);
+    socket.on("draw:request", handleRequest);
+    socket.on("connect", requestBoard);
+    if (socket.connected) requestBoard();
+    return () => {
+      socket.off("draw:sync", handleSync);
+      socket.off("draw:request", handleRequest);
+      socket.off("connect", requestBoard);
+    };
+  }, [socket, isTrainer, module.id, trainingId]);
+
+  const handleChange = useCallback((newSnapshot: WhiteboardSnapshot) => {
+    latestSnapshot.current = newSnapshot;
+    socket.emit("draw:sync", { moduleId: module.id, trainingId, snapshot: newSnapshot });
+  }, [socket, module.id, trainingId]);
 
   return (
     <div className="flex flex-col h-full w-full">

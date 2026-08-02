@@ -21,11 +21,18 @@ export function ParticipantWhiteboard({ module, trainingId }: Props) {
       if (newSnapshot) setSnapshot(newSnapshot);
     };
 
+    // The whiteboard keeps no server state, so on mount and on every (re)connect we
+    // pull the current canvas from the trainer rather than waiting for the next stroke.
+    const requestBoard = () => socket.emit("draw:request", { trainingId, moduleId: module.id });
+
     socket.on("draw:sync", handleSync);
+    socket.on("connect", requestBoard);
+    if (socket.connected) requestBoard();
     return () => {
       socket.off("draw:sync", handleSync);
+      socket.off("connect", requestBoard);
     };
-  }, [socket]);
+  }, [socket, trainingId, module.id]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-100px)] min-h-[500px] bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSocket } from "@/hooks/useSocket";
 import type { TrainingModule } from "@oruclass/types";
 import { AdvancedWhiteboard, type WhiteboardSnapshot } from "./AdvancedWhiteboard";
@@ -13,23 +13,39 @@ interface Props {
 export function TrainerWhiteboard({ module, trainingId }: Props) {
   const socket = useSocket();
   const [snapshot, setSnapshot] = useState<WhiteboardSnapshot | null>(null);
+  // Latest board state, kept in a ref so we can answer a peer's draw:request without
+  // re-subscribing. The trainer owns the canvas, so it's the authoritative responder.
+  const latestSnapshot = useRef<WhiteboardSnapshot | null>(null);
 
   useEffect(() => {
     if (!socket) return;
 
     // We only need sync for full tldraw snapshot
     const handleSync = ({ snapshot: newSnapshot }: { snapshot?: WhiteboardSnapshot }) => {
-      if (newSnapshot) setSnapshot(newSnapshot);
+      if (newSnapshot) {
+        latestSnapshot.current = newSnapshot;
+        setSnapshot(newSnapshot);
+      }
+    };
+
+    // A (re)joining client asked for the current canvas — re-broadcast it.
+    const handleRequest = () => {
+      if (latestSnapshot.current) {
+        socket.emit("draw:sync", { trainingId, moduleId: module.id, snapshot: latestSnapshot.current });
+      }
     };
 
     socket.on("draw:sync", handleSync);
+    socket.on("draw:request", handleRequest);
     return () => {
       socket.off("draw:sync", handleSync);
+      socket.off("draw:request", handleRequest);
     };
-  }, [socket]);
+  }, [socket, trainingId, module.id]);
 
   const handleChange = (newSnapshot: WhiteboardSnapshot) => {
     // Avoid rapid re-rendering loop; tldraw handles internal state
+    latestSnapshot.current = newSnapshot;
     if (socket) {
       socket.emit("draw:sync", { trainingId, moduleId: module.id, snapshot: newSnapshot });
     }

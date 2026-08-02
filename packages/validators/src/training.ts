@@ -105,6 +105,14 @@ export const DrawClearSchema = z.object({
   moduleId: z.string().uuid(),
 });
 
+// A (re)joining client asks peers to re-broadcast the current canvas. The whiteboard
+// keeps no server state, so this is the recovery path for reconnect drift: the request
+// is relayed to the room and whoever holds the board responds with a draw:sync.
+export const DrawRequestSchema = z.object({
+  trainingId: z.string().uuid(),
+  moduleId: z.string().uuid(),
+});
+
 // strokes: legacy stroke-array sync; snapshot: tldraw full-state sync.
 // Exactly one must be present — validated in the handler after parsing.
 export const DrawSyncSchema = z.object({
@@ -239,6 +247,7 @@ export type DuplicateModuleInput = z.infer<typeof DuplicateModuleSchema>;
 export type StrokeInput = z.infer<typeof StrokeSchema>;
 export type DrawUpdateInput = z.infer<typeof DrawUpdateSchema>;
 export type DrawClearInput = z.infer<typeof DrawClearSchema>;
+export type DrawRequestInput = z.infer<typeof DrawRequestSchema>;
 export type DrawSyncInput = z.infer<typeof DrawSyncSchema>;
 export type StickyNoteInput = z.infer<typeof StickyNoteSchema>;
 export type NoteCreateInput = z.infer<typeof NoteCreateSchema>;
