@@ -15,6 +15,7 @@ import {
 } from "../state";
 import { getModuleById } from "../services/modules.service";
 import { getModuleStats } from "../services/stopwatch.service";
+import { getRecentChat } from "../lib/chat-buffer";
 import {
   getRosterSnapshot,
   getFacilitator,
@@ -93,6 +94,11 @@ export function registerParticipantHandlers(ctx: ConnContext): void {
     // Sync the existing roster to the joining socket from the DB (durable across
     // restarts, real connectionStatus per participant).
     socket.emit("roster:snapshot", { participants: await getRosterSnapshot(trainingId, userId) });
+
+    // Replay recent chat so a reconnecting socket recovers messages it missed. The
+    // client dedupes by id, so re-sending messages it already has is harmless.
+    const recentChat = await getRecentChat(trainingId);
+    if (recentChat.length > 0) socket.emit("chat:history", { messages: recentChat });
 
     // Restore active module only if session is currently live.
     const trainingData = await getTraining(trainingId);

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
-import { useLiveSessionStore } from "@/store/liveSession";
+import { useLiveSessionStore, type RoomStateSnapshot } from "@/store/liveSession";
+import { apiClient } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TrainingModule } from "@oruclass/types";
 import { playJoinSound, playLeaveSound, playSessionStartSound, playSessionPauseSound, playSessionResumeSound, playSessionEndSound } from "@/lib/sounds";
@@ -17,6 +18,7 @@ export function useSocketSession(trainingId: string | null) {
   const reset = useLiveSessionStore((s) => s.reset);
   const setResponseCount = useLiveSessionStore((s) => s.setResponseCount);
   const setSocketStatus = useLiveSessionStore((s) => s.setSocketStatus);
+  const hydrateFromSnapshot = useLiveSessionStore((s) => s.hydrateFromSnapshot);
   const qc = useQueryClient();
 
   useEffect(() => {
@@ -28,6 +30,31 @@ export function useSocketSession(trainingId: string | null) {
     const invalidateAll = () => {
       qc.invalidateQueries({ queryKey: ["training"] });
       qc.invalidateQueries({ queryKey: ["participant-training"] });
+    };
+
+    // ── STATE-DRIFT RECOVERY ON RECONNECT ─────────────────────────────────────
+    // A dropped socket misses every event while it's gone (module changes, roster
+    // churn, pause/resume, submission counts), so its in-memory state silently
+    // drifts. On reconnect we don't trust the resumed event stream — we fetch one
+    // authoritative REST snapshot and overwrite the store. The FIRST connect is
+    // skipped: initial state already arrives via react-query + the join emits.
+    let hasConnectedBefore = false;
+    let hydrating = false;
+    const hydrateRoomState = async () => {
+      if (!trainingId || hydrating) return;
+      hydrating = true;
+      try {
+        const { data } = await apiClient.get<RoomStateSnapshot>(
+          `/api/participant/trainings/${trainingId}/room-state`,
+        );
+        hydrateFromSnapshot(data);
+        invalidateAll();
+        qc.invalidateQueries({ queryKey: ["modules"] });
+      } catch {
+        // Snapshot is best-effort; the socket join emits are the fallback path.
+      } finally {
+        hydrating = false;
+      }
     };
 
     // Debounce status downgrades — brief flickers reconnect within several
@@ -53,6 +80,8 @@ export function useSocketSession(trainingId: string | null) {
     socket.on("connect", () => {
       clearDowngrade();
       setSocketStatus("connected");
+      if (hasConnectedBefore) void hydrateRoomState();
+      hasConnectedBefore = true;
     });
     socket.on("disconnect", () => scheduleDowngrade("disconnected"));
     socket.io?.on?.("reconnect_attempt", () => scheduleDowngrade("reconnecting"));
@@ -61,6 +90,7 @@ export function useSocketSession(trainingId: string | null) {
     socket.io?.on?.("reconnect", () => {
       clearDowngrade();
       setSocketStatus("connected");
+      void hydrateRoomState();
     });
     // Browser-level online event — clear any pending downgrade immediately
     // so we don't show a stale "offline" banner after net comes back.

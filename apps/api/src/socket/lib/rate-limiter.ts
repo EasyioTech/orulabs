@@ -4,6 +4,7 @@ export const EVENT_LIMITS: Record<string, [number, number]> = {
   "module:unlock": [20, 1_000],
   "response:submit": [10, 1_000],
   "draw:update": [60, 1_000],
+  "draw:request": [5, 5_000],
   "note:create": [10, 1_000],
   "note:position": [60, 1_000],
   "timer:sync": [10, 1_000],

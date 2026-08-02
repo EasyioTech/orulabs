@@ -1,5 +1,5 @@
 import type { StrokeData, StickyNote } from "@oruclass/types";
-import { DrawUpdateSchema, DrawClearSchema, DrawSyncSchema, NoteCreateSchema, NotePositionSchema, TimerSyncSchema } from "@oruclass/validators";
+import { DrawUpdateSchema, DrawClearSchema, DrawRequestSchema, DrawSyncSchema, NoteCreateSchema, NotePositionSchema, TimerSyncSchema } from "@oruclass/validators";
 import { SocketError } from "../lib/context";
 import type { ConnContext } from "../lib/context";
 
@@ -17,6 +17,12 @@ export function registerDrawingHandlers(ctx: ConnContext): void {
 
   on("draw:clear", DrawClearSchema, ({ trainingId, moduleId }) => {
     socket.to(`training:${trainingId}`).emit("draw:clear", { moduleId, userId });
+  });
+
+  // Reconnect recovery: relay the request so peers (typically the trainer, who owns
+  // the board) re-emit a draw:sync with the current canvas. No server state involved.
+  on("draw:request", DrawRequestSchema, ({ trainingId, moduleId }) => {
+    socket.to(`training:${trainingId}`).emit("draw:request", { moduleId, userId });
   });
 
   on("draw:sync", DrawSyncSchema, ({ trainingId, moduleId, strokes, snapshot }) => {

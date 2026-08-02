@@ -11,12 +11,33 @@ interface LiveParticipantEntry {
 
 type SocketStatus = "connected" | "disconnected" | "reconnecting";
 
+/** Authoritative room snapshot fetched over REST on (re)connect. Mirrors the API's
+ *  RoomStateSnapshot — replaces drifted client state after a network drop. */
+export interface RoomStateSnapshot {
+  trainingId: string;
+  sessionStatus: string;
+  isPaused: boolean;
+  activeModuleId: string | null;
+  activeModule: TrainingModule | null;
+  participants: Array<{ userId: string; name: string; role: "trainer" | "participant"; joinedAt: string; connectionStatus: "online" | "offline" }>;
+  stopwatch: { moduleId: string; accumulatedSeconds: number; isRunning: boolean; lastStartedAt: string } | null;
+  responseCounts: Record<string, number>;
+  grants: { myGrants: GrantablePermission[]; allGrants: Record<string, GrantablePermission[]> };
+  recentChat: Array<{ id: string; userId: string; senderName: string; text: string; sentAt: string }>;
+  serverTime: string;
+}
+
 interface LiveSessionState {
   trainingId: string | null;
   activeModule: TrainingModule | null;
   participants: Map<string, LiveParticipantEntry>;
   isPaused: boolean;
   responseCounts: Map<string, number>;
+  // Recent chat from the last REST snapshot. Populated on reconnect hydration so the
+  // chat UI can replay missed messages even when the socket `chat:history` event
+  // (which only fires on participant:join) doesn't reach it. Merge-by-id on the
+  // consumer side keeps this idempotent with the live `chat:message` stream.
+  snapshotChat: RoomStateSnapshot["recentChat"];
   socketStatus: SocketStatus;
   stopwatch: { moduleId: string; accumulatedSeconds: number; isRunning: boolean; lastStartedAt: string } | null;
   sessionStats: { submitted: number; totalParticipants: number; completionPct: number; liveSessionId: string | null } | null;
@@ -25,6 +46,7 @@ interface LiveSessionState {
   addParticipant: (p: LiveParticipantEntry) => void;
   batchAddParticipants: (all: LiveParticipantEntry[]) => void;
   removeParticipant: (userId: string) => void;
+  hydrateFromSnapshot: (snapshot: RoomStateSnapshot) => void;
   setPaused: (paused: boolean) => void;
   setResponseCount: (moduleId: string, count: number) => void;
   setSocketStatus: (status: SocketStatus) => void;
@@ -48,6 +70,7 @@ export const useLiveSessionStore = create<LiveSessionState>((set) => ({
   participants: new Map(),
   isPaused: false,
   responseCounts: new Map(),
+  snapshotChat: [],
   socketStatus: "connected",
   stopwatch: null,
   sessionStats: null,
@@ -82,6 +105,26 @@ export const useLiveSessionStore = create<LiveSessionState>((set) => ({
       next.delete(userId);
       return { participants: next };
     }),
+  // Overwrite (not merge) local state from the authoritative REST snapshot. A full
+  // replace is deliberate: it reconciles participants who LEFT while we were
+  // disconnected (a merge-only path like batchAddParticipants would leave ghosts).
+  hydrateFromSnapshot: (snapshot) =>
+    set({
+      activeModule: snapshot.activeModule,
+      isPaused: snapshot.isPaused,
+      participants: new Map(snapshot.participants.map((p) => [p.userId, {
+        userId: p.userId,
+        name: p.name,
+        role: p.role,
+        joinedAt: p.joinedAt,
+        connectionStatus: p.connectionStatus,
+      }])),
+      responseCounts: new Map(Object.entries(snapshot.responseCounts)),
+      stopwatch: snapshot.stopwatch,
+      snapshotChat: snapshot.recentChat,
+      grantedPermissions: snapshot.grants.myGrants,
+      sessionGrants: new Map(Object.entries(snapshot.grants.allGrants)),
+    }),
   setPaused: (isPaused) => set({ isPaused }),
   setResponseCount: (moduleId, count) =>
     set((s) => {
@@ -115,6 +158,7 @@ export const useLiveSessionStore = create<LiveSessionState>((set) => ({
       participants: new Map(),
       isPaused: false,
       responseCounts: new Map(),
+      snapshotChat: [],
       socketStatus: "connected",
       stopwatch: null,
       sessionStats: null,

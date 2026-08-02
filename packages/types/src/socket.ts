@@ -14,6 +14,8 @@ export interface ClientToServerEvents {
   ) => void;
   "draw:update": (data: { trainingId: string; moduleId: string; stroke?: StrokeData; snapshot?: WhiteboardSnapshotPayload }) => void;
   "draw:clear": (data: { trainingId: string; moduleId: string }) => void;
+  // Reconnect recovery: ask peers to re-broadcast the current canvas via draw:sync.
+  "draw:request": (data: { trainingId: string; moduleId: string }) => void;
   "draw:sync": (data: { trainingId: string; moduleId: string; strokes?: StrokeData[]; snapshot?: WhiteboardSnapshotPayload }) => void;
   "note:create": (data: { trainingId: string; moduleId: string; note: StickyNote }) => void;
   "note:position": (data: { trainingId: string; moduleId: string; noteId: string; x: number; y: number }) => void;
@@ -38,6 +40,8 @@ export interface ServerToClientEvents {
   "session:submission_update": (data: { trainingId: string; moduleId: string; liveSessionId: string; submitted: number; totalParticipants: number }) => void;
   "draw:update": (data: { moduleId: string; userId: string; stroke?: StrokeData; snapshot?: WhiteboardSnapshotPayload }) => void;
   "draw:clear": (data: { moduleId: string; userId: string }) => void;
+  // Relayed peer request to re-broadcast the canvas (see ClientToServer draw:request).
+  "draw:request": (data: { moduleId: string; userId: string }) => void;
   "draw:sync": (data: { moduleId: string; userId: string; strokes?: StrokeData[]; snapshot?: WhiteboardSnapshotPayload }) => void;
   "note:create": (data: { moduleId: string; note: StickyNote }) => void;
   "note:position": (data: { moduleId: string; noteId: string; x: number; y: number }) => void;
@@ -49,6 +53,9 @@ export interface ServerToClientEvents {
   "session:ended": () => void;
   "session:reset": () => void;
   "chat:message": (data: { id: string; userId: string; senderName: string; text: string; sentAt: string }) => void;
+  // Recent-chat replay sent to a (re)joining socket so it can catch up on messages it
+  // missed while disconnected. The client merges by id (dedupes against live messages).
+  "chat:history": (data: { messages: Array<{ id: string; userId: string; senderName: string; text: string; sentAt: string }> }) => void;
   "trainer:attention_alert": (data: { userId: string; userName: string; isFocused: boolean }) => void;
   "session:permission_granted": (data: { permission: GrantablePermission; grantedBy: string }) => void;
   "session:permission_revoked": (data: { permission: GrantablePermission }) => void;
