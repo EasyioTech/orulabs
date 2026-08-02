@@ -13,6 +13,7 @@ import { eq, and } from "drizzle-orm";
 import type { ModuleType } from "@oruclass/types";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const aiRouter = new Hono<AppEnv>();
 
@@ -236,13 +237,42 @@ aiRouter.post("/chat", async (c) => {
   const contextNote = context?.page ? `\nUser is currently on: ${context.page}${context.trainingId ? ` (trainingId: ${context.trainingId})` : ""}${context.workspaceId ? ` (workspaceId: ${context.workspaceId})` : ""}` : "";
 
   try {
-    // Groq and Gemini use OpenAI-compatible APIs
+    // Groq uses OpenAI-compatible API
     const PROVIDER_BASE_URLS: Record<string, string> = {
       groq: "https://api.groq.com/openai/v1",
-      gemini: "https://generativelanguage.googleapis.com/v1beta/openai/",
     };
 
-    if (provider === "openai" || provider === "groq" || provider === "gemini") {
+    // ── Gemini: use native SDK ────────────────────────────────────────────────
+    if (provider === "gemini") {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const geminiModel = genAI.getGenerativeModel({ model });
+
+      const chatHistory = history.map((h) => ({
+        role: h.role === "assistant" ? "model" : "user",
+        parts: [{ text: h.content }],
+      }));
+
+      const chat = geminiModel.startChat({
+        history: [
+          { role: "user", parts: [{ text: SYSTEM + contextNote }] },
+          { role: "model", parts: [{ text: "Understood. I am OruClass Assistant, ready to help." }] },
+          ...chatHistory,
+        ],
+      });
+
+      try {
+        const result = await chat.sendMessage(message);
+        const reply = result.response.text();
+        return c.json({ reply });
+      } catch (geminiErr: unknown) {
+        console.error("[Gemini] raw error:", JSON.stringify(geminiErr, null, 2));
+        const rawMsg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
+        // Pass the raw error through so we can see exactly what Google says
+        return c.json({ error: `Gemini error: ${rawMsg}` }, 500);
+      }
+    }
+
+    if (provider === "openai" || provider === "groq") {
       const resolvedBaseUrl = baseUrl || PROVIDER_BASE_URLS[provider];
       const client = new OpenAI({ apiKey, ...(resolvedBaseUrl ? { baseURL: resolvedBaseUrl } : {}) });
       const msgs: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -311,7 +341,22 @@ aiRouter.post("/chat", async (c) => {
     return c.json({ error: "Unsupported provider" }, 400);
   } catch (err: unknown) {
     console.error("[AI] error:", err);
-    const msg = err instanceof Error ? err.message : String(err);
+
+    // Surface friendly messages for common API errors
+    let msg = err instanceof Error ? err.message : String(err);
+
+    if (msg.includes("429") || msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("quota")) {
+      msg = "Rate limit exceeded (429). You've hit Google's free tier quota. Wait 60 seconds and try again, or upgrade your Google AI plan at aistudio.google.com.";
+    } else if (msg.includes("401") || msg.toLowerCase().includes("invalid api key") || msg.toLowerCase().includes("unauthenticated")) {
+      msg = "Invalid API key (401). Please double-check your key in Engine Setup.";
+    } else if (msg.includes("403")) {
+      msg = "Access denied (403). Your API key may not have permission to use this model.";
+    } else if (msg.includes("404") || msg.toLowerCase().includes("model not found")) {
+      msg = "Model not found (404). Check the model name is correct for this provider.";
+    } else if (msg.includes("503") || msg.toLowerCase().includes("overloaded")) {
+      msg = "The AI provider is temporarily overloaded (503). Try again in a moment.";
+    }
+
     return c.json({ error: msg }, 500);
   }
 });
