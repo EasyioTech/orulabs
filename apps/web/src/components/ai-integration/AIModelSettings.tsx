@@ -50,11 +50,11 @@ const MODELS: Record<AiProvider, ModelDef[]> = {
   ],
 };
 
-const PROVIDERS: { id: AiProvider; label: string; keyHint: string; keyPrefix: string; getKeyUrl: string }[] = [
-  { id: "openai",    label: "OpenAI",    keyHint: "sk-...",       keyPrefix: "sk-",      getKeyUrl: "https://platform.openai.com/api-keys" },
-  { id: "anthropic", label: "Anthropic", keyHint: "sk-ant-...",   keyPrefix: "sk-ant-",  getKeyUrl: "https://console.anthropic.com/settings/keys" },
-  { id: "gemini",    label: "Google Gemini", keyHint: "AIza...",      keyPrefix: "AIza",     getKeyUrl: "https://aistudio.google.com/app/apikey" },
-  { id: "groq",      label: "Groq",      keyHint: "gsk_...",      keyPrefix: "gsk_",     getKeyUrl: "https://console.groq.com/keys" },
+const PROVIDERS: { id: AiProvider; label: string; keyHint: string; keyPrefix: string | null; getKeyUrl: string }[] = [
+  { id: "openai",    label: "OpenAI",       keyHint: "sk-...",       keyPrefix: "sk-",    getKeyUrl: "https://platform.openai.com/api-keys" },
+  { id: "anthropic", label: "Anthropic",    keyHint: "sk-ant-...",   keyPrefix: "sk-ant-",getKeyUrl: "https://console.anthropic.com/settings/keys" },
+  { id: "gemini",    label: "Google Gemini",keyHint: "AIza... or AQ.", keyPrefix: null,   getKeyUrl: "https://aistudio.google.com/app/apikey" },
+  { id: "groq",      label: "Groq",         keyHint: "gsk_...",      keyPrefix: "gsk_",   getKeyUrl: "https://console.groq.com/keys" },
 ];
 
 // ── validation ─────────────────────────────────────────────────────────────────
@@ -62,6 +62,8 @@ const PROVIDERS: { id: AiProvider; label: string; keyHint: string; keyPrefix: st
 function validateKey(key: string, provider: AiProvider): string | null {
   if (!key.trim()) return "API key is required";
   const p = PROVIDERS.find((x) => x.id === provider)!;
+  // Gemini accepts multiple key formats (AIza... from API keys, AQ. from OAuth tokens)
+  if (p.keyPrefix === null) return null;
   if (!key.startsWith(p.keyPrefix)) return `${p.label} keys start with "${p.keyPrefix}"`;
   return null;
 }
