@@ -88,7 +88,7 @@ export function AddModuleDrawer({
                     addModule.isPending && !selected && "opacity-50 cursor-not-allowed",
                   )}
                 >
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-gray-100 mb-3", selected ? "bg-[#1a73e8] border-[#1a73e8]" : "bg-white")}>
+                  <div className={cn("w-10 h-10 rounded flex items-center justify-center shrink-0 border border-gray-100 mb-3", selected ? "bg-[#1a73e8] border-[#1a73e8]" : "bg-white")}>
                     <t.Icon size={18} className={selected ? "text-white" : "text-gray-600"} />
                   </div>
                   <div className="min-w-0 flex-1">

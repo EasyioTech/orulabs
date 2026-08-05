@@ -6,6 +6,8 @@ export const CreateWorkspaceSchema = z.object({
     .object({
       allowGuestJoin: z.boolean().optional(),
       maxParticipants: z.number().int().min(1).max(500).optional(),
+      enableRaiseHand: z.boolean().optional(),
+      enableChat: z.boolean().optional(),
     })
     .optional(),
 });

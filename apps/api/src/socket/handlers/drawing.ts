@@ -1,6 +1,5 @@
 import type { StrokeData, StickyNote } from "@oruclass/types";
 import { DrawUpdateSchema, DrawClearSchema, DrawRequestSchema, DrawSyncSchema, NoteCreateSchema, NotePositionSchema, TimerSyncSchema } from "@oruclass/validators";
-import { SocketError } from "../lib/context";
 import type { ConnContext } from "../lib/context";
 
 /**
@@ -25,13 +24,11 @@ export function registerDrawingHandlers(ctx: ConnContext): void {
     socket.to(`training:${trainingId}`).emit("draw:request", { moduleId, userId });
   });
 
-  on("draw:sync", DrawSyncSchema, ({ trainingId, moduleId, strokes, snapshot }) => {
-    if (!strokes && !snapshot) throw new SocketError("BAD_PAYLOAD", "draw:sync requires strokes or snapshot");
+  on("draw:sync", DrawSyncSchema, ({ trainingId, moduleId, strokes }) => {
     socket.to(`training:${trainingId}`).emit("draw:sync", {
       moduleId,
       userId,
-      strokes: strokes as StrokeData[] | undefined,
-      snapshot: snapshot as Record<string, unknown> | undefined,
+      strokes: strokes as StrokeData[],
     });
   });
 

@@ -33,6 +33,7 @@ export interface Training {
   pendingInvitations?: TrainingFacilitatorInvitation[];
   modules?: TrainingModule[];
   days?: TrainingDay[];
+  workspace?: { settings: Record<string, any> };
 }
 
 export interface TrainingDay {
@@ -216,8 +217,7 @@ export interface SubmissionEntry {
 
 export type ResponseData =
   | { type: "quiz"; answers: Record<string, string> }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tldraw snapshot; types pkg can't depend on tldraw
-  | { type: "whiteboard"; snapshot: any }
+  | { type: "whiteboard"; strokes: StrokeData[] }
   | { type: "reflection"; text: string; comments?: ReflectionComment[] }
   | { type: "matrix"; cells: Record<string, string> }
   | { type: "sticky"; notes: StickyNote[] }
@@ -245,10 +245,11 @@ export function responseDataOf<T extends ResponseData["type"]>(
 }
 
 export interface StrokeData {
+  id: string;
   points: { x: number; y: number }[];
   color: string;
   width: number;
-  tool?: "pen" | "eraser" | "highlighter" | "line" | "arrow" | "square";
+  tool?: "pen" | "eraser" | "highlighter";
 }
 
 export interface ReflectionComment {

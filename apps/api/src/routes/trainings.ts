@@ -504,6 +504,21 @@ trainingsRouter.patch(
           .update(liveSessions)
           .set({ status: "completed", endedAt: new Date() })
           .where(and(eq(liveSessions.trainingId, id), eq(liveSessions.status, "active")));
+
+        // Tear down all ephemeral live-room state so re-delivering this same
+        // training later starts clean instead of replaying the old session's
+        // active module, pause flag, grants, chat, and unlocked modules.
+        await db
+          .update(trainingModules)
+          .set({ isUnlocked: false, updatedAt: new Date() })
+          .where(eq(trainingModules.trainingId, id));
+        await db
+          .update(trainings)
+          .set({ currentActiveModuleId: null, updatedAt: new Date() })
+          .where(and(eq(trainings.id, id), eq(trainings.workspaceId, workspaceId)));
+        const { endLiveRoom } = await import("../socket/state");
+        await endLiveRoom(id);
+
         bustLiveSessionCache(id);
         getIO().to(`training:${id}`).emit("session:ended");
 
@@ -538,8 +553,7 @@ trainingsRouter.post(
     const workspaceId = c.get("workspaceId") as string;
     const { id } = c.req.param();
 
-    const { trainingModules } = await import("../db/schema");
-    const { getOrCreateState, persistState } = await import("../socket/state");
+    const { endLiveRoom } = await import("../socket/state");
 
     await db
       .update(trainingModules)
@@ -563,10 +577,8 @@ trainingsRouter.post(
       const { bustLiveSessionCache } = await import("../socket/handlers");
       bustLiveSessionCache(id);
 
-      // Clear socket state
-      const state = getOrCreateState(id);
-      state.activeModuleId = null;
-      await persistState(id);
+      // Full ephemeral teardown: in-memory + Redis state, grants, and chat buffer.
+      await endLiveRoom(id);
 
       getIO().to(`training:${id}`).emit("session:reset");
       getIO().to(`training:${id}`).emit("module:unlocked", { moduleId: null, module: null });

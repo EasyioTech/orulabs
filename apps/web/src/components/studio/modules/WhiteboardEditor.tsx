@@ -6,7 +6,7 @@ export function WhiteboardEditor({ module, config, onChange }: { module: Trainin
     <div className="mt-4">
       <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-4">
         <p className="text-xs text-indigo-700 font-medium">
-          Whiteboard has been upgraded to a premium infinite canvas using tldraw! You no longer need to specify canvas dimensions.
+          The trainer draws on a shared live canvas and participants follow along in real time. No canvas dimensions to configure.
         </p>
       </div>
       <label className="text-xs font-semibold text-gray-700 block mb-1.5">Initial Instructions (Optional)</label>

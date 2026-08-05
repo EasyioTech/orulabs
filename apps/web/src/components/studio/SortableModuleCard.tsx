@@ -30,16 +30,21 @@ export function SortableModuleCard({
   index,
   workspaceId,
   trainingId,
+  isExpanded = false,
+  onToggle,
+  onClose,
 }: {
   module: TrainingModule;
   index: number;
   workspaceId: string;
   trainingId: string;
+  isExpanded?: boolean;
+  onToggle?: () => void;
+  onClose?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: module.id });
   const canEdit = useStudioCan("edit_modules");
   const qc = useQueryClient();
-  const [expanded, setExpanded] = useState(false);
   const [localConfig, setLocalConfig] = useState<ModuleConfig>(module.config);
 
   const updateModule = useUpdateModule(workspaceId, trainingId);
@@ -62,7 +67,7 @@ export function SortableModuleCard({
 
   const saveConfig = () => {
     updateModule.mutate({ moduleId: module.id, data: { config: localConfig } });
-    setExpanded(false);
+    onClose?.();
   };
 
   const toggleAlwaysOn = () => {
@@ -77,15 +82,15 @@ export function SortableModuleCard({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       onClick={(e) => {
-        if (canEdit && !expanded && !isDragging) {
+        if (canEdit && !isExpanded && !isDragging) {
           e.stopPropagation();
-          setExpanded(true);
+          if (onToggle) onToggle();
         }
       }}
       className={cn(
         "bg-white rounded-lg overflow-hidden transition-all",
-        canEdit && !expanded ? "cursor-pointer hover:shadow-sm" : "",
-        isDragging ? "shadow-lg opacity-90 scale-[1.01] border border-[#dadce0]" : expanded ? "shadow-md border-y border-r border-[#dadce0] border-l-4 border-l-[#1a73e8] my-4" : "border border-[#dadce0]",
+        canEdit && !isExpanded ? "cursor-pointer hover:shadow-sm" : "",
+        isDragging ? "shadow-lg opacity-90 scale-[1.01] border border-[#dadce0]" : isExpanded ? "shadow-sm border border-[#dadce0] my-3" : "border border-[#dadce0]",
       )}
     >
       <div className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3">
@@ -99,8 +104,8 @@ export function SortableModuleCard({
           </div>
         )}
 
-        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", def.bg)}>
-          <Icon size={17} className={def.color} />
+        <div className={cn("w-8 h-8 rounded flex items-center justify-center shrink-0", def.bg)}>
+          <Icon size={16} className={def.color} />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -119,7 +124,7 @@ export function SortableModuleCard({
         </div>
 
         {module.moduleType === "attendance" ? (
-          <div className="shrink-0 flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-full border bg-emerald-50 border-emerald-200 text-emerald-700 font-medium">
+          <div className="shrink-0 flex items-center gap-1.5 text-[11px] px-2 py-1 rounded bg-emerald-50 text-emerald-700 font-medium">
             <Eye size={12} />
             <span className="hidden sm:inline">Always visible</span>
           </div>
@@ -132,10 +137,10 @@ export function SortableModuleCard({
                 : "Participants can only see this when trainer activates it (click to make always visible)"
             }
             className={cn(
-              "shrink-0 flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-full border font-medium transition-all",
+              "shrink-0 flex items-center gap-1.5 text-[11px] px-2 py-1 rounded font-medium transition-colors",
               module.isAlwaysOn
-                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                : "border-gray-100 text-gray-400 hover:border-gray-300 hover:text-gray-600",
+                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700",
             )}
           >
             {module.isAlwaysOn ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -144,10 +149,10 @@ export function SortableModuleCard({
         ) : (
           <div
             className={cn(
-              "shrink-0 flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-full border font-medium",
+              "shrink-0 flex items-center gap-1.5 text-[11px] px-2 py-1 rounded font-medium",
               module.isAlwaysOn
-                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                : "border-gray-100 text-gray-400",
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-gray-50 text-gray-500",
             )}
           >
             {module.isAlwaysOn ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -275,7 +280,7 @@ export function SortableModuleCard({
       </div>
 
 
-      {expanded && (
+      {isExpanded && (
         <div className="border-t border-[#dadce0] px-4 pb-4">
           <ModuleConfigEditor module={module} config={localConfig} onChange={setLocalConfig} />
           {canEdit && (
@@ -294,7 +299,7 @@ export function SortableModuleCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setExpanded(false);
+                  onClose?.();
                 }}
                 className="px-4 py-2 text-[#1a73e8] hover:bg-blue-50/50 rounded-md text-sm font-medium transition-colors"
               >

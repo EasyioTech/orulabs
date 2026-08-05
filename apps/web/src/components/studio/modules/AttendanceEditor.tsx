@@ -1,4 +1,4 @@
-import { Plus, X, ToggleLeft, ToggleRight, CheckCircle2 } from "lucide-react";
+import { Plus, X, ToggleLeft, ToggleRight, CheckCircle2, Lock } from "lucide-react";
 import { cn } from "@oruclass/utils";
 import type { TrainingModule, ModuleConfig, AttendanceField } from "@oruclass/types";
 
@@ -34,12 +34,12 @@ export function AttendanceEditor({ config, onChange }: { module: TrainingModule;
           </button>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded">
-          <div className="w-4 h-4 rounded-full bg-teal-500 flex items-center justify-center flex-shrink-0">
-            <CheckCircle2 size={10} className="text-white" strokeWidth={3} />
+        <div className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="text-gray-400 flex items-center justify-center flex-shrink-0">
+            <Lock size={14} />
           </div>
-          <span className="text-xs text-teal-700 font-medium flex-1">Full Name</span>
-          <span className="text-[10px] text-teal-500 bg-teal-100 rounded-full px-2 py-0.5">built-in · required</span>
+          <span className="text-xs text-gray-700 font-medium flex-1">Full Name</span>
+          <span className="text-[10px] text-gray-500 font-medium">Built-in (Required)</span>
         </div>
 
         {fields.length === 0 && (

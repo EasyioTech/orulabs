@@ -11,6 +11,8 @@ export interface Workspace {
 export interface WorkspaceSettings {
   allowGuestJoin?: boolean;
   maxParticipants?: number;
+  enableRaiseHand?: boolean;
+  enableChat?: boolean;
 }
 
 export interface WorkspaceMember {

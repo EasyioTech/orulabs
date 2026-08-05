@@ -10,7 +10,7 @@ import { useLiveSessionStore } from "@/store/liveSession";
 import { RoleGate } from "@/components/shared/RoleGate";
 import type { Training, TrainingRole } from "@oruclass/types";
 import { cn } from "@oruclass/utils";
-import { Play, Pause, Square, RotateCcw, Lock, Unlock, PlayCircle, RefreshCw, Users, AlertCircle } from "lucide-react";
+import { Play, Pause, Square, RotateCcw, Lock, Unlock, PlayCircle, RefreshCw, Users, AlertCircle, ArrowRight } from "lucide-react";
 
 const ACTIVE_STATUSES = ["connecting", "live", "paused"] as const;
 
@@ -48,6 +48,9 @@ export function ControlPanel({ trainingId, workspaceId, training, userTrainingRo
   const stopOtherSession = useUpdateTrainingStatus(workspaceId, otherActiveSession?.id ?? "");
   // Multi-day training must have a day chosen before opening for joining
   const needsDayPick = status === "draft" && days.length > 0 && !dayParam;
+
+  const activeModuleIndex = modules?.findIndex(m => m.id === training.currentActiveModuleId) ?? -1;
+  const nextModule = activeModuleIndex >= 0 && modules && activeModuleIndex < modules.length - 1 ? modules[activeModuleIndex + 1] : null;
 
   return (
     <div className="p-4 space-y-5">
@@ -221,39 +224,63 @@ export function ControlPanel({ trainingId, workspaceId, training, userTrainingRo
         }
       >
         <div>
-          <p className="text-[10.5px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
-            Modules
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10.5px] font-bold text-gray-800 uppercase tracking-widest">
+              Modules
+            </p>
+            {nextModule && status !== "draft" && status !== "completed" && (
+              <button
+                onClick={() => unlockModule.mutate(nextModule.id)}
+                disabled={unlockModule.isPending}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg text-[11px] font-bold transition-colors active:scale-95"
+              >
+                Next Module
+                <ArrowRight size={12} strokeWidth={2.5} />
+              </button>
+            )}
+          </div>
           {!modules?.length ? (
-            <p className="text-[12px] text-gray-400 px-1">No modules added yet.</p>
+            <div className="flex flex-col items-center justify-center py-6 px-4 bg-gray-50 border border-gray-100 rounded-xl">
+              <p className="text-[12px] text-gray-400 font-medium text-center">No modules added yet.</p>
+            </div>
           ) : (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {modules.map((m, i) => {
                 const isActive = training.currentActiveModuleId === m.id;
                 return (
                   <button
                     key={m.id}
                     onClick={() => unlockModule.mutate(m.id)}
-                    disabled={isActive}
+                    disabled={isActive || unlockModule.isPending}
                     className={cn(
-                      "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[12.5px] font-medium transition-all text-left",
+                      "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[13px] font-semibold transition-all text-left shadow-sm border",
                       isActive
-                        ? "bg-brand-50 border border-brand-200 text-brand-700"
+                        ? "bg-gradient-to-r from-brand-50 to-white border-brand-200 text-brand-800 ring-1 ring-brand-100"
                         : m.isUnlocked
-                        ? "bg-gray-50 border border-gray-100 text-gray-500 cursor-default"
-                        : "bg-white border border-gray-100 text-gray-700 hover:bg-gray-50 hover:border-gray-300 active:scale-[.98]",
+                        ? "bg-gray-50/50 border-gray-100 text-gray-500 cursor-default"
+                        : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-brand-300 hover:shadow-md active:scale-[.98]",
                     )}
                   >
-                    {isActive ? (
-                      <PlayCircle size={14} className="text-brand-500 flex-shrink-0" strokeWidth={2} />
-                    ) : m.isUnlocked ? (
-                      <Unlock size={14} className="text-gray-400 flex-shrink-0" strokeWidth={2} />
-                    ) : (
-                      <Lock size={14} className="text-gray-300 flex-shrink-0" strokeWidth={2} />
-                    )}
-                    <span className="truncate">
+                    <div className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors shadow-sm",
+                      isActive ? "bg-brand-100 text-brand-600" : m.isUnlocked ? "bg-gray-200 text-gray-400" : "bg-gray-50 text-gray-400 border border-gray-200"
+                    )}>
+                      {isActive ? (
+                        <PlayCircle size={14} strokeWidth={2.5} />
+                      ) : m.isUnlocked ? (
+                        <Unlock size={12} strokeWidth={2.5} />
+                      ) : (
+                        <Lock size={12} strokeWidth={2.5} />
+                      )}
+                    </div>
+                    <span className="truncate flex-1">
                       {i + 1}. {m.title}
                     </span>
+                    {isActive && (
+                      <span className="text-[9px] uppercase tracking-wider font-bold text-brand-600 bg-brand-100 px-2 py-0.5 rounded-full">
+                        Live
+                      </span>
+                    )}
                   </button>
                 );
               })}

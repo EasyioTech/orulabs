@@ -1,7 +1,6 @@
 import { redis } from "../db/redis";
 
 const MAX_ATTEMPTS = 10;
-const LOCKOUT_TTL = 15 * 60; // 15 minutes in seconds
 const WINDOW_TTL = 15 * 60;
 
 function key(email: string) {
@@ -23,8 +22,4 @@ export async function isLockedOut(email: string): Promise<boolean> {
 
 export async function clearLockout(email: string): Promise<void> {
   await redis.del(key(email));
-}
-
-export function lockoutTTL() {
-  return LOCKOUT_TTL;
 }

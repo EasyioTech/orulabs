@@ -142,7 +142,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg border border-[#dadce0]">
-                <div className="w-14 h-14 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
+                <div className="w-14 h-14 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
                   <CalendarDays size={24} className="text-gray-300" />
                 </div>
                 <p className="text-base font-bold text-gray-700">No curriculum yet</p>
@@ -174,7 +174,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
         {["live", "connecting", "paused"].includes(training?.sessionStatus ?? "") ? (
           <Link
             href={`/trainings/${trainingId}/live`}
-            className="flex items-center justify-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-full text-sm font-medium transition-colors shadow-sm w-full sm:w-auto shrink-0"
+            className="flex items-center justify-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors shadow-sm w-full sm:w-auto shrink-0"
           >
             <Play size={16} />
             Join Session
@@ -182,7 +182,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
         ) : (!myRole || canDo(myRole, "pause_room")) ? (
           <Link
             href={`/trainings/${trainingId}/live`}
-            className="flex items-center justify-center gap-2 px-6 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-full text-sm font-medium transition-colors shadow-sm w-full sm:w-auto shrink-0"
+            className="flex items-center justify-center gap-2 px-6 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-md text-sm font-medium transition-colors shadow-sm w-full sm:w-auto shrink-0"
           >
             <Radio size={16} />
             Go Live
@@ -239,7 +239,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
               {dayMods.length > 0 && (
                 <span
                   className={cn(
-                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded",
                     isActive ? "bg-blue-200/50 text-[#1a73e8]" : "bg-gray-100 text-gray-500",
                   )}
                 >
@@ -265,7 +265,7 @@ export function StudioPage({ trainingId }: { trainingId: string }) {
             <span>Unassigned</span>
             <span
               className={cn(
-                "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                "text-[10px] font-bold px-1.5 py-0.5 rounded",
                 effectiveTab === "general" ? "bg-amber-200/50 text-amber-800" : "bg-amber-100 text-amber-600",
               )}
             >

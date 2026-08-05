@@ -61,7 +61,7 @@ export function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: stri
           <Users size={15} className="text-gray-500" />
           <h2 className="text-sm font-bold text-gray-900">Training Team</h2>
           {(facilitators.length + allInvitations.length) > 0 && (
-            <span className="text-[10px] font-semibold bg-[#d2e3fc] text-[#1557b0] px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-[#d2e3fc] text-[#1557b0] px-1.5 py-0.5 rounded">
               {facilitators.length + allInvitations.length}
             </span>
           )}
@@ -227,7 +227,7 @@ export function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: stri
                     <div className="flex gap-2">
                       <button
                         onClick={() => setShowAssign(false)}
-                        className="flex-1 py-2 text-[#1a73e8] bg-transparent rounded-full text-xs font-medium hover:bg-blue-50/50 transition-colors"
+                        className="flex-1 py-2 text-[#1a73e8] bg-transparent rounded-md text-xs font-medium hover:bg-blue-50/50 transition-colors"
                       >
                         Cancel
                       </button>
@@ -239,7 +239,7 @@ export function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: stri
                             { onSuccess: () => { setSelectedUserId(""); setShowAssign(false); } },
                           );
                         }}
-                        className="flex-1 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-full text-xs font-medium disabled:opacity-60 transition-colors shadow-sm"
+                        className="flex-1 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-md text-xs font-medium disabled:opacity-60 transition-colors shadow-sm"
                       >
                         {assignFacilitator.isPending ? "Assigning…" : "Assign"}
                       </button>
@@ -279,7 +279,7 @@ export function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: stri
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowAssign(false)}
-                    className="flex-1 py-2 text-[#1a73e8] bg-transparent rounded-full text-xs font-medium hover:bg-blue-50/50 transition-colors"
+                    className="flex-1 py-2 text-[#1a73e8] bg-transparent rounded-md text-xs font-medium hover:bg-blue-50/50 transition-colors"
                   >
                     Cancel
                   </button>
@@ -291,7 +291,7 @@ export function FacilitatorPanel({ trainingId, workspaceId }: { trainingId: stri
                         { onSuccess: () => { setInviteEmail(""); setShowAssign(false); setSelectedRole("full_editor"); } },
                       );
                     }}
-                    className="flex-1 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-full text-xs font-medium disabled:opacity-60 transition-colors shadow-sm"
+                    className="flex-1 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-md text-xs font-medium disabled:opacity-60 transition-colors shadow-sm"
                   >
                     {inviteFacilitator.isPending ? "Inviting…" : "Invite"}
                   </button>

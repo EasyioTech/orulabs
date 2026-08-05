@@ -139,6 +139,9 @@ export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
     );
   }
 
+  const enableRaiseHand = training.workspace?.settings?.enableRaiseHand ?? true;
+  const enableChat = training.workspace?.settings?.enableChat ?? true;
+
   const renderContent = () => {
     if (training.sessionStatus === "completed") {
       return <CompletedSlide training={training} isTrainer={false} />;
@@ -331,34 +334,38 @@ export function ParticipantLiveRoom({ trainingId }: { trainingId: string }) {
             </>
           ) : (
             <>
-              <button
-                onClick={() => alert("Trainer has been notified that your hand is raised.")}
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200"
-                title="Raise Hand"
-              >
-                <Hand size={18} />
-              </button>
-              <button
-                onClick={() => setChatOpen(v => !v)}
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center transition-colors relative shadow-sm",
-                  chatOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                )}
-                title="Toggle Chat"
-              >
-                <MessageSquare size={18} />
-                {chatUnread > 0 && !chatOpen && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
-                    {chatUnread > 9 ? "9+" : chatUnread}
-                  </span>
-                )}
-              </button>
+              {enableRaiseHand && (
+                <button
+                  onClick={() => alert("Trainer has been notified that your hand is raised.")}
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  title="Raise Hand"
+                >
+                  <Hand size={18} />
+                </button>
+              )}
+              {enableChat && (
+                <button
+                  onClick={() => setChatOpen(v => !v)}
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors relative shadow-sm",
+                    chatOpen ? "bg-[#e8f0fe] text-[#1a73e8]" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                  title="Toggle Chat"
+                >
+                  <MessageSquare size={18} />
+                  {chatUnread > 0 && !chatOpen && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-0.5">
+                      {chatUnread > 9 ? "9+" : chatUnread}
+                    </span>
+                  )}
+                </button>
+              )}
             </>
           )}
         </div>
 
         <div className="w-1/3 min-w-0 flex items-center justify-end gap-3">
-          {training.type !== "in_person" && (
+          {training.type !== "in_person" && enableChat && (
             <button
               onClick={() => setChatOpen(v => !v)}
               className={cn(

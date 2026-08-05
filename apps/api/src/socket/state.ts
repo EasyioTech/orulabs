@@ -72,10 +72,22 @@ export function removeParticipant(trainingId: string, userId: string): void {
   liveState.get(trainingId)?.participants.delete(userId);
 }
 
-export function cleanupTraining(trainingId: string): void {
+/**
+ * Full ephemeral-state teardown for the end of a live session. Wipes every
+ * training-keyed live artifact (in-memory + Redis state, grants, recent-chat
+ * buffer) so the next delivery of the same training starts from a clean slate
+ * rather than replaying the previous session's module/pause/grants/chat. Durable,
+ * liveSessionId-scoped data (responses, module stats, liveSessions rows) is left
+ * untouched — analytics and the digest still need it.
+ */
+export async function endLiveRoom(trainingId: string): Promise<void> {
+  const { clearChat } = await import("./lib/chat-buffer");
   liveState.delete(trainingId);
-  redis.del(REDIS_KEY(trainingId)).catch(() => {});
-  redis.del(GRANTS_KEY(trainingId)).catch(() => {});
+  await Promise.allSettled([
+    redis.del(REDIS_KEY(trainingId)),
+    redis.del(GRANTS_KEY(trainingId)),
+    clearChat(trainingId),
+  ]);
 }
 
 const GRANTS_KEY = (trainingId: string) => `live:grants:${trainingId}`;

@@ -28,7 +28,9 @@ export function WorkspaceAgent({ workspaceId }: { workspaceId: string }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > 1 || isProcessing) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }, [messages, isProcessing]);
 
   const handleSubmit = async (e: React.SyntheticEvent) => {

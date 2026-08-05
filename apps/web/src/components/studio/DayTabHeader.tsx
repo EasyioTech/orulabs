@@ -115,7 +115,7 @@ export function DayTabHeader({
               <p className="text-[11px] text-gray-300">No date set</p>
             )}
             {day.deliveryMode && (
-              <span className="text-[10px] font-medium bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full border border-gray-100">
+              <span className="text-[10px] font-medium bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-100">
                 {day.deliveryMode === "in_person" ? "In-Person" : day.deliveryMode === "online" ? "Virtual" : "Hybrid"}
               </span>
             )}

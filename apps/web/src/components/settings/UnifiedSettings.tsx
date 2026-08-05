@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { useWorkspaceStore } from "@/store/workspace";
-import { User, Settings, Sparkles, Building, LogOut, Mail, Calendar } from "lucide-react";
+import { User, Settings, Sparkles, Building, LogOut, Mail, Calendar, Check, Save } from "lucide-react";
 import { format } from "date-fns";
 import { AIDataAnalysisTab } from "@/components/ai-integration/AIDataAnalysisTab";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,17 +19,30 @@ export function UnifiedSettings() {
   const { data: workspace } = useWorkspace(activeWorkspaceId ?? "");
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState("profile");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const { register, handleSubmit, reset } = useForm<{ name: string }>({
-    values: { name: workspace?.name ?? "" },
+  const { register, handleSubmit, reset } = useForm<{ name: string; enableRaiseHand: boolean; enableChat: boolean }>({
+    values: { 
+      name: workspace?.name ?? "",
+      enableRaiseHand: workspace?.settings?.enableRaiseHand ?? true,
+      enableChat: workspace?.settings?.enableChat ?? true,
+    },
   });
 
   const mutation = useMutation({
-    mutationFn: (data: { name: string }) =>
-      apiClient.patch(`/api/workspaces/${activeWorkspaceId}`, data, {
+    mutationFn: (data: { name: string; enableRaiseHand: boolean; enableChat: boolean }) =>
+      apiClient.patch(`/api/workspaces/${activeWorkspaceId}`, {
+        name: data.name,
+        settings: { ...workspace?.settings, enableRaiseHand: data.enableRaiseHand, enableChat: data.enableChat }
+      }, {
         headers: { "X-Workspace-ID": activeWorkspaceId! },
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["workspace", activeWorkspaceId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["workspace", activeWorkspaceId] });
+      qc.invalidateQueries({ queryKey: ["workspaces"] });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
+    },
   });
 
   if (!user) {
@@ -148,23 +161,64 @@ export function UnifiedSettings() {
             <h2 className="text-xl font-bold text-gray-900 mb-6">Workspace Settings</h2>
             <form
               onSubmit={handleSubmit((d) => mutation.mutate(d))}
-              className="max-w-md space-y-6"
+              className="max-w-xl space-y-8"
             >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Workspace Name</label>
-                <input
-                  {...register("name")}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all"
-                  placeholder="E.g., Acme Corp Training"
-                />
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Workspace Name</label>
+                  <input
+                    {...register("name")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent transition-all"
+                    placeholder="E.g., Acme Corp Training"
+                  />
+                  <p className="text-xs text-gray-500 mt-1.5">This name will be visible to all members of the workspace.</p>
+                </div>
+
+                <div className="pt-5 border-t border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-900 mb-4">Meeting Features</h3>
+                  
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        {...register("enableRaiseHand")}
+                        className="w-4 h-4 text-[#1a73e8] border-gray-300 rounded focus:ring-[#1a73e8] cursor-pointer"
+                      />
+                      <span className="text-sm text-gray-700">Enable Raise Hand</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        {...register("enableChat")}
+                        className="w-4 h-4 text-[#1a73e8] border-gray-300 rounded focus:ring-[#1a73e8] cursor-pointer"
+                      />
+                      <span className="text-sm text-gray-700">Enable Live Chat</span>
+                    </label>
+                  </div>
+                </div>
               </div>
-              <button
-                type="submit"
-                disabled={mutation.isPending}
-                className="px-6 py-2.5 bg-[#1a73e8] text-white rounded-lg text-sm font-medium hover:bg-[#1557b0] disabled:opacity-60 transition-colors shadow-sm"
-              >
-                {mutation.isPending ? "Saving..." : "Save changes"}
-              </button>
+              
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={mutation.isPending}
+                  className={cn(
+                    "flex items-center gap-2 px-6 py-2 rounded text-sm font-medium transition-colors",
+                    saveSuccess 
+                      ? "bg-green-600 text-white hover:bg-green-700" 
+                      : "bg-[#1a73e8] text-white hover:bg-[#1557b0] disabled:opacity-60"
+                  )}
+                >
+                  {mutation.isPending ? (
+                    <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
+                  ) : saveSuccess ? (
+                    <><Check size={16} strokeWidth={2.5} /> Saved Successfully</>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+              </div>
             </form>
           </div>
         )}

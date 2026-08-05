@@ -138,14 +138,14 @@ export function TrainingInfoPanel({ trainingId, workspaceId }: { trainingId: str
             <div className="flex gap-2">
               <button
                 onClick={() => setEditing(false)}
-                className="flex-1 py-1.5 text-[#1a73e8] bg-transparent rounded-full text-xs font-medium hover:bg-blue-50/50 transition-colors"
+                className="flex-1 py-1.5 text-[#1a73e8] bg-transparent rounded-md text-xs font-medium hover:bg-blue-50/50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={save}
                 disabled={updateTraining.isPending || !title.trim()}
-                className="flex-1 py-1.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-full text-xs font-medium disabled:opacity-60 transition-colors shadow-sm"
+                className="flex-1 py-1.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-md text-xs font-medium disabled:opacity-60 transition-colors shadow-sm"
               >
                 {updateTraining.isPending ? "Saving…" : "Save"}
               </button>
@@ -156,12 +156,12 @@ export function TrainingInfoPanel({ trainingId, workspaceId }: { trainingId: str
             <p className="text-sm font-semibold text-gray-900">{training.title}</p>
             <div className="flex flex-wrap gap-1.5">
               {training.labels?.map((label: string, idx: number) => (
-                <span key={idx} className="text-[10px] font-bold bg-[#e8f0fe] text-[#1557b0] px-2 py-0.5 rounded-full border border-brand-100">
+                <span key={idx} className="text-[10px] font-bold bg-[#e8f0fe] text-[#1557b0] px-2 py-0.5 rounded border border-brand-100">
                   {label}
                 </span>
               ))}
               {training.venue && (
-                <span className="text-[10px] font-medium text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 flex items-center gap-1">
+                <span className="text-[10px] font-medium text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 flex items-center gap-1">
                   {training.venue}
                 </span>
               )}

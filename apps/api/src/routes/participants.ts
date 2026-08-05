@@ -89,7 +89,11 @@ participantsRouter.get("/participant/trainings/:id", async (c) => {
     where: and(eq(trainingParticipants.userId, userId), eq(trainingParticipants.trainingId, id)),
     with: {
       training: {
-        with: { creator: true, modules: { orderBy: (m, { asc }) => [asc(m.position)] } },
+        with: { 
+          creator: true, 
+          modules: { orderBy: (m, { asc }) => [asc(m.position)] },
+          workspace: { columns: { settings: true } },
+        },
       },
     },
   });

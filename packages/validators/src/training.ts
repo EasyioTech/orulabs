@@ -88,6 +88,7 @@ export const StrokeSchema = z.object({
   id: z.string().max(64),
   color: z.string().max(32),
   width: z.number().finite().min(0).max(64),
+  tool: z.enum(["pen", "eraser", "highlighter"]).optional(),
   points: z
     .array(z.object({ x: z.number().finite().min(-10_000).max(10_000), y: z.number().finite().min(-10_000).max(10_000) }))
     .min(1)
@@ -113,13 +114,12 @@ export const DrawRequestSchema = z.object({
   moduleId: z.string().uuid(),
 });
 
-// strokes: legacy stroke-array sync; snapshot: tldraw full-state sync.
-// Exactly one must be present — validated in the handler after parsing.
+// Full-canvas sync used for reconnect recovery: the board owner re-broadcasts every
+// committed stroke so a (re)joining client can rebuild the canvas from scratch.
 export const DrawSyncSchema = z.object({
   trainingId: z.string().uuid(),
   moduleId: z.string().uuid(),
-  strokes: z.array(StrokeSchema).max(5_000).optional(),
-  snapshot: z.record(z.unknown()).optional(),
+  strokes: z.array(StrokeSchema).max(5_000),
 });
 
 export const StickyNoteSchema = z.object({

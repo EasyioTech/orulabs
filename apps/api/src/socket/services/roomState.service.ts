@@ -74,13 +74,14 @@ export async function buildRoomStateSnapshot(
     getRosterSnapshot(trainingId, userId),
     activeModuleId ? getModuleById(activeModuleId) : Promise.resolve(null),
     activeModuleId && liveSessionId ? getModuleStats(liveSessionId, activeModuleId) : Promise.resolve(undefined),
-    activeModuleId
+    activeModuleId && liveSessionId
       ? db
           .select({ responseCount: count() })
           .from(participantResponses)
           .where(and(
             eq(participantResponses.trainingId, trainingId),
             eq(participantResponses.moduleId, activeModuleId),
+            eq(participantResponses.liveSessionId, liveSessionId),
           ))
       : Promise.resolve([{ responseCount: 0 }] as const),
     getRecentChat(trainingId),

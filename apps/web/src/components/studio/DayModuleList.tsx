@@ -23,6 +23,7 @@ export function DayModuleList({
 }) {
   const reorderModules = useReorderModules(workspaceId, trainingId);
   const [adding, setAdding] = useState(false);
+  const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
   const canEdit = useStudioCan("edit_modules");
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -57,6 +58,9 @@ export function DayModuleList({
                 index={i}
                 workspaceId={workspaceId}
                 trainingId={trainingId}
+                isExpanded={expandedModuleId === m.id}
+                onToggle={() => setExpandedModuleId(expandedModuleId === m.id ? null : m.id)}
+                onClose={() => setExpandedModuleId(null)}
               />
             ))}
           </div>
@@ -87,7 +91,7 @@ export function DayModuleList({
       {!adding && modules.length > 0 && canEdit && (
         <button
           onClick={() => setAdding(true)}
-          className="flex items-center justify-center gap-2 w-full py-3 rounded-full bg-white border border-[#dadce0] text-[#1a73e8] font-medium text-sm hover:bg-[#f8f9fa] hover:border-[#1a73e8] transition-all group shadow-sm"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-md bg-white border border-[#dadce0] text-[#1a73e8] font-medium text-sm hover:bg-[#f8f9fa] hover:border-[#1a73e8] transition-all group shadow-sm"
         >
           <Plus size={16} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
           Add module

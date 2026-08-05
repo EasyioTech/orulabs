@@ -26,9 +26,9 @@ const nextConfig: NextConfig = {
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https: https://cdn.tldraw.com",
-      "font-src 'self' data: https://fonts.gstatic.com https://cdn.tldraw.com",
-      `connect-src 'self' ${apiOrigin} ${wsOrigin} ${sentryOrigin} ${liveKitUrl} ${liveKitHttpUrl} https://cdn.tldraw.com https://unpkg.com wss://*.livekit.cloud https://*.livekit.cloud`.trim(),
+      "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https:",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      `connect-src 'self' ${apiOrigin} ${wsOrigin} ${sentryOrigin} ${liveKitUrl} ${liveKitHttpUrl} wss://*.livekit.cloud https://*.livekit.cloud`.trim(),
       "frame-ancestors 'none'",
       "frame-src 'self' https://www.youtube.com https://youtube.com",
       "object-src 'none'",
@@ -53,12 +53,17 @@ const nextConfig: NextConfig = {
 
 };
 
-export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  silent: true,
-  widenClientFileUpload: true,
-  sourcemaps: { disable: true },
-  disableLogger: true,
-  automaticVercelMonitors: false,
-});
+// Sentry's Next SDK forces the webpack bundler, which disables Turbopack and makes
+// dev cold starts take minutes. We only need Sentry instrumentation in production
+// builds, so in dev we export the plain config and let Next.js use Turbopack.
+export default process.env.NODE_ENV === "production"
+  ? withSentryConfig(nextConfig, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      silent: true,
+      widenClientFileUpload: true,
+      sourcemaps: { disable: true },
+      disableLogger: true,
+      automaticVercelMonitors: false,
+    })
+  : nextConfig;

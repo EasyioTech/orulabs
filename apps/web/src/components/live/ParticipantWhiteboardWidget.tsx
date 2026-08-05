@@ -1,72 +1,93 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParticipantScratchpad, useUpdateParticipantScratchpad } from "@/hooks/useParticipantScratchpad";
 import { X, Save, CheckCircle2 } from "lucide-react";
-import { AdvancedWhiteboard, type WhiteboardSnapshot } from "../tools/AdvancedWhiteboard";
+import type { StrokeData } from "@oruclass/types";
+import { WhiteboardBoard } from "../tools/whiteboard/WhiteboardBoard";
 
 export function ParticipantWhiteboardWidget({ trainingId, onClose }: { trainingId: string; onClose: () => void }) {
   const { data: scratchpad, isLoading } = useParticipantScratchpad(trainingId);
   const updateScratchpad = useUpdateParticipantScratchpad(trainingId);
-  
-  const [snapshot, setSnapshot] = useState<WhiteboardSnapshot | null>(null);
+
+  const [strokes, setStrokes] = useState<StrokeData[]>([]);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hydratedRef = useRef(false);
 
-  // Initialize from scratchpad
+  // Hydrate once from the persisted scratchpad.
   useEffect(() => {
-    if (scratchpad?.personalWhiteboard && scratchpad.personalWhiteboard.snapshot) {
-      setSnapshot(scratchpad.personalWhiteboard.snapshot as WhiteboardSnapshot);
+    if (hydratedRef.current) return;
+    const saved = scratchpad?.personalWhiteboard?.strokes;
+    if (Array.isArray(saved)) {
+      setStrokes(saved as StrokeData[]);
+      hydratedRef.current = true;
     }
   }, [scratchpad?.personalWhiteboard]);
 
-  const saveSnapshot = (newSnapshot: WhiteboardSnapshot) => {
-    setSaveStatus("saving");
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-
-    saveTimeoutRef.current = setTimeout(() => {
-      updateScratchpad.mutate(
-        { personalWhiteboard: { snapshot: newSnapshot } },
-        {
-          onSuccess: () => {
-            setSaveStatus("saved");
-            setTimeout(() => setSaveStatus("idle"), 2000);
+  const persist = useCallback(
+    (next: StrokeData[]) => {
+      setSaveStatus("saving");
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(() => {
+        updateScratchpad.mutate(
+          { personalWhiteboard: { strokes: next } },
+          {
+            onSuccess: () => {
+              setSaveStatus("saved");
+              setTimeout(() => setSaveStatus("idle"), 2000);
+            },
           },
-        }
-      );
-    }, 1000);
-  };
+        );
+      }, 1000);
+    },
+    [updateScratchpad],
+  );
 
-  const handleChange = (newSnapshot: WhiteboardSnapshot) => {
-    setSnapshot(newSnapshot);
-    saveSnapshot(newSnapshot);
-  };
+  const handleStroke = useCallback(
+    (stroke: StrokeData) => {
+      setStrokes((prev) => {
+        const next = [...prev, stroke];
+        persist(next);
+        return next;
+      });
+    },
+    [persist],
+  );
+
+  const handleClear = useCallback(() => {
+    setStrokes([]);
+    persist([]);
+  }, [persist]);
 
   return (
-    <div className="flex flex-col fixed inset-0 z-[60] md:relative md:z-auto md:h-[500px] md:w-[600px] md:max-w-[90vw] bg-white md:rounded-xl shadow-lg md:border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-8 fade-in duration-200">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/50 z-20">
+    <div className="animate-in slide-in-from-bottom-8 fade-in fixed inset-0 z-[60] flex flex-col overflow-hidden bg-white shadow-lg duration-200 md:relative md:z-auto md:h-[500px] md:w-[600px] md:max-w-[90vw] md:rounded-xl md:border md:border-gray-100">
+      <div className="z-20 flex items-center justify-between border-b border-gray-100 bg-gray-50/50 px-4 py-3">
+        <h3 className="text-sm font-semibold text-gray-800">Personal Whiteboard</h3>
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-gray-800 text-sm">Personal Whiteboard</h3>
-        </div>
-        <div className="flex items-center gap-3">
-          {saveStatus === "saving" && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Save size={10} className="animate-pulse" /> Saving...</span>}
-          {saveStatus === "saved" && <span className="text-[10px] text-green-500 flex items-center gap-1"><CheckCircle2 size={10} /> Saved</span>}
-          <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-lg transition-colors text-gray-500">
+          {saveStatus === "saving" && (
+            <span className="flex items-center gap-1 text-[10px] text-gray-400">
+              <Save size={10} className="animate-pulse" /> Saving...
+            </span>
+          )}
+          {saveStatus === "saved" && (
+            <span className="flex items-center gap-1 text-[10px] text-green-500">
+              <CheckCircle2 size={10} /> Saved
+            </span>
+          )}
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-500 transition-colors hover:bg-gray-200">
             <X size={16} />
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden relative">
+      <div className="relative flex-1 overflow-hidden">
         {isLoading ? (
-          <div className="h-full w-full flex items-center justify-center bg-gray-50">
-            <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <div className="flex h-full w-full items-center justify-center bg-gray-50">
+            <div className="border-brand-500 h-5 w-5 animate-spin rounded-full border-2 border-t-transparent" />
           </div>
         ) : (
-          <AdvancedWhiteboard
-            snapshot={snapshot}
-            onChange={handleChange}
-          />
+          <WhiteboardBoard strokes={strokes} onStroke={handleStroke} onClear={handleClear} />
         )}
       </div>
     </div>

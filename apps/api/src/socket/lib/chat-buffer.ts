@@ -34,6 +34,16 @@ export async function pushChatMessage(trainingId: string, msg: BufferedChatMessa
   }
 }
 
+/** Drop the recent-chat buffer for a training. Called on session end so a fresh
+ * delivery of the same training doesn't replay the previous session's messages. */
+export async function clearChat(trainingId: string): Promise<void> {
+  try {
+    await redis.del(CHAT_KEY(trainingId));
+  } catch (err) {
+    logger.error(err, "chat buffer clear failed");
+  }
+}
+
 export async function getRecentChat(trainingId: string): Promise<BufferedChatMessage[]> {
   try {
     const raw = await redis.lRange(CHAT_KEY(trainingId), 0, -1);

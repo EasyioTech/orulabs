@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSocket } from "@/hooks/useSocket";
 import type { TrainingModule } from "@oruclass/types";
-import { AdvancedWhiteboard, type WhiteboardSnapshot } from "./AdvancedWhiteboard";
+import { LiveWhiteboard } from "./whiteboard/LiveWhiteboard";
 
 interface Props {
   module: TrainingModule;
@@ -11,45 +9,12 @@ interface Props {
 }
 
 export function ParticipantWhiteboard({ module, trainingId }: Props) {
-  const socket = useSocket();
-  const [snapshot, setSnapshot] = useState<WhiteboardSnapshot | null>(null);
-
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleSync = ({ snapshot: newSnapshot }: { snapshot?: WhiteboardSnapshot }) => {
-      if (newSnapshot) setSnapshot(newSnapshot);
-    };
-
-    // The whiteboard keeps no server state, so on mount and on every (re)connect we
-    // pull the current canvas from the trainer rather than waiting for the next stroke.
-    const requestBoard = () => socket.emit("draw:request", { trainingId, moduleId: module.id });
-
-    socket.on("draw:sync", handleSync);
-    socket.on("connect", requestBoard);
-    if (socket.connected) requestBoard();
-    return () => {
-      socket.off("draw:sync", handleSync);
-      socket.off("connect", requestBoard);
-    };
-  }, [socket, trainingId, module.id]);
-
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)] min-h-[500px] bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 bg-gray-50/50 border-b border-gray-100">
-        <h2 className="font-bold text-gray-800 flex-1">{module.title}</h2>
-        <span className="text-xs px-2.5 py-1 bg-gray-100 text-gray-600 font-semibold rounded-full">
-          View Only
-        </span>
-      </div>
-      
-      <div className="flex-1 relative bg-[#f3f3f3]">
-        <AdvancedWhiteboard
-          snapshot={snapshot}
-          readonly={true}
-          className="w-full h-full"
-        />
-      </div>
-    </div>
+    <LiveWhiteboard
+      module={module}
+      trainingId={trainingId}
+      readOnly
+      badge={{ text: "View Only", className: "rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600" }}
+    />
   );
 }

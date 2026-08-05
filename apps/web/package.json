@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "next dev --turbopack --port 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -61,7 +61,6 @@
     "recharts": "^2.15.3",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.3.0",
-    "tldraw": "^5.2.5",
     "xlsx": "^0.18.5",
     "yjs": "^13.6.31",
     "zod": "^3.24.4",

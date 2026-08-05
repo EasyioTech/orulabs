@@ -215,7 +215,7 @@ function ResponseContent({ module, response }: { module: TrainingModule; respons
     case "whiteboard":
       return (
         <p className="text-sm text-gray-500 italic">
-          Whiteboard submission (Snapshot saved)
+          Whiteboard submission saved
         </p>
       );
 

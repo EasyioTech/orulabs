@@ -88,14 +88,14 @@ export function SessionChecklist({ workspaceId, trainingId }: { workspaceId: str
           <div className="flex gap-2 pt-1">
             <button
               onClick={() => setEditing(false)}
-              className="flex-1 py-1.5 text-[#1a73e8] bg-transparent rounded-full text-xs font-medium hover:bg-blue-50/50 transition-colors"
+              className="flex-1 py-1.5 text-[#1a73e8] bg-transparent rounded-md text-xs font-medium hover:bg-blue-50/50 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={save}
               disabled={updateTraining.isPending}
-              className="flex-1 py-1.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-full text-xs font-medium disabled:opacity-60 transition-colors shadow-sm"
+              className="flex-1 py-1.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-md text-xs font-medium disabled:opacity-60 transition-colors shadow-sm"
             >
               {updateTraining.isPending ? "Saving…" : "Save"}
             </button>
